@@ -20,6 +20,23 @@ function saveLocalListings(listings) {
   localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(listings));
 }
 
+export function normalizeListing(item) {
+  if (!item) return item;
+  let photos = [];
+  if (Array.isArray(item.photos) && item.photos.length > 0) {
+    photos = item.photos;
+  } else if (Array.isArray(item.listing_photos) && item.listing_photos.length > 0) {
+    photos = item.listing_photos
+      .map(p => (typeof p === "string" ? p : p?.storage_path))
+      .filter(Boolean);
+  }
+  return {
+    ...item,
+    photos,
+    category_slug: item.categories?.slug || item.category_slug
+  };
+}
+
 // Sanitize search query to protect PostgREST filters: remove , ( ) % per brief
 export function sanitizeSearchQuery(query) {
   if (!query) return "";
@@ -53,7 +70,7 @@ export const listingsRepo = {
 
         const { data, error } = await query;
         if (error) throw error;
-        return { data, error: null };
+        return { data: (data || []).map(normalizeListing), error: null };
       } catch (err) {
         console.warn("Supabase listings query fallback to local:", err.message);
       }
@@ -94,7 +111,7 @@ export const listingsRepo = {
           .order("created_at", { ascending: false });
 
         if (error) throw error;
-        return { data, error: null };
+        return { data: (data || []).map(normalizeListing), error: null };
       } catch (err) {
         console.warn("Supabase search fallback to local:", err.message);
       }
@@ -110,7 +127,7 @@ export const listingsRepo = {
         (item.locality && item.locality.toLowerCase().includes(term))
       );
     });
-    return { data: list, error: null };
+    return { data: list.map(normalizeListing), error: null };
   },
 
   async getListingById(id) {
@@ -123,14 +140,14 @@ export const listingsRepo = {
           .eq("id", id)
           .single();
         if (error) throw error;
-        return { data, error: null };
+        return { data: normalizeListing(data), error: null };
       } catch (err) {
         console.warn("Supabase getById fallback:", err.message);
       }
     }
 
     const item = getLocalListings().find(x => x.id === id);
-    return { data: item || null, error: item ? null : "Listing not found" };
+    return { data: normalizeListing(item) || null, error: item ? null : "Listing not found" };
   },
 
   async getMySubmissions(userId) {
@@ -143,14 +160,14 @@ export const listingsRepo = {
           .eq("owner_id", userId)
           .order("created_at", { ascending: false });
         if (error) throw error;
-        return { data, error: null };
+        return { data: (data || []).map(normalizeListing), error: null };
       } catch (err) {
         console.warn("Supabase submissions fallback:", err.message);
       }
     }
 
     const list = getLocalListings().filter(x => x.owner_id === userId);
-    return { data: list, error: null };
+    return { data: list.map(normalizeListing), error: null };
   },
 
   async getAdminPendingListings() {
@@ -163,14 +180,14 @@ export const listingsRepo = {
           .eq("status", "pending")
           .order("created_at", { ascending: false });
         if (error) throw error;
-        return { data, error: null };
+        return { data: (data || []).map(normalizeListing), error: null };
       } catch (err) {
         console.warn("Supabase pending fallback:", err.message);
       }
     }
 
     const list = getLocalListings().filter(x => x.status === "pending");
-    return { data: list, error: null };
+    return { data: list.map(normalizeListing), error: null };
   },
 
   async getAllAdminListings() {
@@ -182,13 +199,13 @@ export const listingsRepo = {
           .select("*, listing_photos(storage_path)")
           .order("created_at", { ascending: false });
         if (error) throw error;
-        return { data, error: null };
+        return { data: (data || []).map(normalizeListing), error: null };
       } catch (err) {
         console.warn("Supabase all listings fallback:", err.message);
       }
     }
 
-    return { data: getLocalListings(), error: null };
+    return { data: getLocalListings().map(normalizeListing), error: null };
   },
 
   async createListing(listingData, user) {

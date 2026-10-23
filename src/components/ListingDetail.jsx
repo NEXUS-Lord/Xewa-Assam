@@ -13,9 +13,19 @@ export default function ListingDetail({
   onShowToast
 }) {
   const [photoIndex, setPhotoIndex] = useState(0);
-  const photos = listing.photos && listing.photos.length > 0
-    ? listing.photos
-    : ["https://images.unsplash.com/photo-1582650625119-3a31f8418b7d?auto=format&fit=crop&w=1000&q=80"];
+  const FALLBACK_PHOTO = "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=1000&q=80";
+
+  let photos = [];
+  if (Array.isArray(listing.photos) && listing.photos.length > 0) {
+    photos = listing.photos;
+  } else if (Array.isArray(listing.listing_photos) && listing.listing_photos.length > 0) {
+    photos = listing.listing_photos
+      .map(p => (typeof p === "string" ? p : p?.storage_path))
+      .filter(Boolean);
+  }
+  if (photos.length === 0) {
+    photos = [FALLBACK_PHOTO];
+  }
 
   const copyPhone = () => {
     const num = cleanPhone(listing.phone);
@@ -64,6 +74,11 @@ export default function ListingDetail({
             src={photos[photoIndex]}
             alt={listing.name}
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            onError={(e) => {
+              if (e.currentTarget.src !== FALLBACK_PHOTO) {
+                e.currentTarget.src = FALLBACK_PHOTO;
+              }
+            }}
           />
 
           {photos.length > 1 && (

@@ -9,9 +9,11 @@ export default function ListingCard({
   onReport,
   onShowToast
 }) {
-  const photoUrl = listing.photos && listing.photos.length > 0
-    ? listing.photos[0]
-    : "https://images.unsplash.com/photo-1582650625119-3a31f8418b7d?auto=format&fit=crop&w=600&q=80";
+  const FALLBACK_PHOTO = "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80";
+
+  const photoUrl = (listing.photos && listing.photos.length > 0 && listing.photos[0])
+    || (listing.listing_photos && listing.listing_photos.length > 0 && (listing.listing_photos[0].storage_path || listing.listing_photos[0]))
+    || FALLBACK_PHOTO;
 
   const copyPhoneNumber = (e) => {
     e.stopPropagation();
@@ -24,7 +26,17 @@ export default function ListingCard({
     <div className="listing-card">
       {/* Photo Header */}
       <div className="listing-photo-box" onClick={() => onOpenDetail(listing)}>
-        <img src={photoUrl} alt={listing.name} className="listing-photo-img" loading="lazy" />
+        <img
+          src={photoUrl}
+          alt={listing.name}
+          className="listing-photo-img"
+          loading="lazy"
+          onError={(e) => {
+            if (e.currentTarget.src !== FALLBACK_PHOTO) {
+              e.currentTarget.src = FALLBACK_PHOTO;
+            }
+          }}
+        />
         
         {listing.is_verified && (
           <div className="verified-badge">

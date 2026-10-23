@@ -1,26 +1,42 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
   <defs>
-    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+    <linearGradient id="pin-body" x1="32" y1="4" x2="32" y2="52" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#10b981"/>
       <stop offset="100%" stop-color="#047857"/>
     </linearGradient>
-    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#34d399"/>
-      <stop offset="100%" stop-color="#059669"/>
-    </linearGradient>
     <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#047857" flood-opacity="0.25"/>
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#064e3b" flood-opacity="0.35"/>
     </filter>
   </defs>
-  <!-- Background Rounded Shield -->
-  <rect width="64" height="64" rx="16" fill="url(#g)" filter="url(#shadow)"/>
-  <rect x="2" y="2" width="60" height="60" rx="14" stroke="#ffffff" stroke-opacity="0.15" stroke-width="1.5"/>
 
-  <!-- Stylized dynamic "X" with service wings -->
-  <path d="M19 18L45 46M45 18L19 46" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- Central vibrant node -->
-  <circle cx="32" cy="32" r="6" fill="#facc15" stroke="#ffffff" stroke-width="2"/>
-  <!-- Sparkle dots -->
-  <circle cx="47" cy="17" r="2.5" fill="#ffffff"/>
-  <circle cx="17" cy="47" r="2.5" fill="#ffffff"/>
+  <!-- Location Pin Shape -->
+  <path d="M32 4C20.954 4 12 12.954 12 24c0 14 20 36 20 36s20-22 20-36C52 12.954 43.046 4 32 4z"
+        fill="url(#pin-body)" filter="url(#shadow)"/>
+
+  <!-- Inner white circle -->
+  <circle cx="32" cy="24" r="14" fill="white" opacity="0.95"/>
+
+  <!-- Stylized X lettermark inside circle — thicker, design-y, not a close button -->
+  <g transform="translate(32,24)">
+    <!-- Left stroke of X -->
+    <line x1="-7" y1="-7" x2="7" y2="7" stroke="#047857" stroke-width="4.5" stroke-linecap="round"/>
+    <!-- Right stroke of X -->
+    <line x1="7" y1="-7" x2="-7" y2="7" stroke="#059669" stroke-width="4.5" stroke-linecap="round"/>
+    <!-- Center dot -->
+    <circle cx="0" cy="0" r="2.5" fill="#f59e0b"/>
+  </g>
+
+  <!-- Golden sparkle at top-right -->
+  <g transform="translate(46,10)">
+    <path d="M0-4L1.2-1.2L4 0L1.2 1.2L0 4L-1.2 1.2L-4 0L-1.2-1.2Z" fill="#facc15"/>
+  </g>
+
+  <!-- Small sparkle at bottom-left of pin -->
+  <g transform="translate(16,14)">
+    <path d="M0-2.5L0.8-0.8L2.5 0L0.8 0.8L0 2.5L-0.8 0.8L-2.5 0L-0.8-0.8Z" fill="#a7f3d0"/>
+  </g>
 </svg>

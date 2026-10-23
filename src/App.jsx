@@ -357,16 +357,34 @@ export default function App() {
       </section>
 
       {/* Footer */}
-      <footer style={{ marginTop: "auto", borderTop: "1px solid #e2e8f0", background: "#ffffff", padding: "32px 20px", textAlign: "center" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "8px" }}>
-          <img src="/logo.svg" alt="Xewa" style={{ width: "24px", height: "24px", borderRadius: "6px" }} />
-          <span style={{ fontSize: "18px", fontWeight: "800", color: "#064e3b" }}>{kAppName}</span>
+      <footer style={{
+        marginTop: "auto",
+        borderTop: "1px solid rgba(16,185,129,0.15)",
+        background: "linear-gradient(to bottom, #022c22, #011a14)",
+        padding: "40px 20px 32px",
+        textAlign: "center"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", marginBottom: "12px" }}>
+          <img src="/logo.svg" alt="Xewa" style={{ width: "28px", height: "28px", filter: "drop-shadow(0 2px 6px rgba(16,185,129,0.3))" }} />
+          <span style={{
+            fontSize: "20px",
+            fontWeight: "800",
+            background: "linear-gradient(135deg, #34d399, #a7f3d0)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent"
+          }}>{kAppName}</span>
           <span style={{ fontSize: "13px", color: "#64748b" }}>— {kAppTagline}</span>
         </div>
-        <p style={{ fontSize: "12px", color: "#64748b", maxWidth: "480px", margin: "0 auto 12px" }}>
-          A local service directory dedicated to small towns of Assam (starting with Tezpur & Nagaon).
+        <p style={{ fontSize: "13px", color: "#94a3b8", maxWidth: "480px", margin: "0 auto 14px", lineHeight: "1.6" }}>
+          A local service directory dedicated to small towns of Assam, starting with Tezpur & Nagaon.
         </p>
-        <p style={{ fontSize: "11px", color: "#94a3b8" }}>
+        <div style={{
+          width: "60px",
+          height: "2px",
+          background: "linear-gradient(90deg, transparent, #059669, transparent)",
+          margin: "0 auto 14px"
+        }} />
+        <p style={{ fontSize: "11px", color: "#475569" }}>
           Semester Project for NEXUS | B.Voc IT, Gauhati University
         </p>
       </footer>

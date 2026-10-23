@@ -34,7 +34,7 @@ export default function Header({
             onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
             title="Switch City"
           >
-            <MapPin size={15} color="#059669" />
+            <MapPin size={15} color="#34d399" />
             <span>{selectedCity.name}</span>
             <ChevronDown size={14} />
           </button>
@@ -45,17 +45,18 @@ export default function Header({
                 position: "absolute",
                 top: "115%",
                 left: 0,
-                background: "#ffffff",
-                border: "1px solid #e2e8f0",
+                background: "rgba(15, 23, 42, 0.95)",
+                backdropFilter: "blur(16px)",
+                border: "1px solid rgba(255,255,255,0.1)",
                 borderRadius: "14px",
-                boxShadow: "0 10px 25px rgba(0,0,0,0.12)",
+                boxShadow: "0 16px 40px rgba(0,0,0,0.35)",
                 padding: "6px",
                 zIndex: 200,
                 minWidth: "160px",
                 animation: "slideUp 0.15s ease-out"
               }}
             >
-              <div style={{ padding: "6px 10px", fontSize: "11px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>
+              <div style={{ padding: "6px 10px", fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                 Select Town
               </div>
               {CITIES.map(c => (
@@ -74,12 +75,12 @@ export default function Header({
                     borderRadius: "8px",
                     fontSize: "13px",
                     fontWeight: "600",
-                    color: selectedCity.id === c.id ? "#047857" : "#1e293b",
-                    background: selectedCity.id === c.id ? "#ecfdf5" : "transparent"
+                    color: selectedCity.id === c.id ? "#34d399" : "#cbd5e1",
+                    background: selectedCity.id === c.id ? "rgba(16,185,129,0.12)" : "transparent"
                   }}
                 >
                   <span>{c.name}</span>
-                  {selectedCity.id === c.id && <CheckCircle2 size={14} color="#059669" />}
+                  {selectedCity.id === c.id && <CheckCircle2 size={14} color="#34d399" />}
                 </button>
               ))}
             </div>
@@ -97,9 +98,9 @@ export default function Header({
             fontWeight: "600",
             padding: "5px 10px",
             borderRadius: "999px",
-            background: isConnected ? "#ecfdf5" : "#fef3c7",
-            color: isConnected ? "#047857" : "#b45309",
-            border: `1px solid ${isConnected ? "#a7f3d0" : "#fde68a"}`
+            background: isConnected ? "rgba(16,185,129,0.12)" : "rgba(245,158,11,0.12)",
+            color: isConnected ? "#34d399" : "#fbbf24",
+            border: `1px solid ${isConnected ? "rgba(16,185,129,0.25)" : "rgba(245,158,11,0.25)"}`
           }}
           title="Supabase Backend Status (Click to configure)"
         >
@@ -133,29 +134,31 @@ export default function Header({
               gap: "8px",
               padding: "6px 12px",
               borderRadius: "999px",
-              background: "#f1f5f9",
-              border: "1px solid #e2e8f0",
+              background: "rgba(255,255,255,0.08)",
+              border: "1px solid rgba(255,255,255,0.12)",
               fontWeight: "600",
-              fontSize: "13px"
+              fontSize: "13px",
+              color: "#e2e8f0"
             }}
           >
             <div
               style={{
-                width: "24px",
-                height: "24px",
+                width: "26px",
+                height: "26px",
                 borderRadius: "50%",
-                background: "#059669",
+                background: "linear-gradient(135deg, #10b981, #059669)",
                 color: "#ffffff",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 fontSize: "11px",
-                fontWeight: "700"
+                fontWeight: "700",
+                boxShadow: "0 2px 6px rgba(16,185,129,0.3)"
               }}
             >
               {currentUser.full_name?.charAt(0).toUpperCase() || "U"}
             </div>
-            <span style={{ maxWidth: "100px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <span style={{ maxWidth: "100px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#e2e8f0" }}>
               {currentUser.full_name?.split(" ")[0]}
             </span>
           </button>
@@ -166,16 +169,16 @@ export default function Header({
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              padding: "7px 14px",
+              padding: "7px 16px",
               borderRadius: "999px",
-              background: "#ffffff",
-              border: "1px solid #cbd5e1",
+              background: "rgba(255,255,255,0.08)",
+              border: "1px solid rgba(255,255,255,0.15)",
               fontSize: "13px",
               fontWeight: "600",
-              color: "#334155"
+              color: "#e2e8f0"
             }}
           >
-            <User size={15} />
+            <User size={15} color="#94a3b8" />
             <span>Log In</span>
           </button>
         )}

@@ -1,0 +1,538 @@
+import React, { useState, useEffect } from "react";
+import {
+  X, Shield, CheckCircle, XCircle, AlertTriangle, Users,
+  ListFilter, Plus, RefreshCw, Trash2, Eye, ShieldAlert, Check
+} from "lucide-react";
+import { listingsRepo } from "../data/listingsRepo";
+import { authRepo } from "../data/authRepo";
+import { reportsRepo } from "../data/reportsRepo";
+import { CITIES, CATEGORIES } from "../core/constants";
+
+export default function AdminDashboard({
+  currentUser,
+  onClose,
+  onOpenListingDetail,
+  onShowToast
+}) {
+  const [activeTab, setActiveTab] = useState("pending"); // 'pending' | 'users' | 'reports' | 'allListings'
+  const [pendingListings, setPendingListings] = useState([]);
+  const [allListings, setAllListings] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [userSubTab, setUserSubTab] = useState("pendingUsers"); // 'pendingUsers' | 'approvedUsers'
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [pendingRes, allRes, usersRes, reportsRes] = await Promise.all([
+        listingsRepo.getAdminPendingListings(),
+        listingsRepo.getAllAdminListings(),
+        authRepo.getAllProfiles(),
+        reportsRepo.getReports()
+      ]);
+
+      if (pendingRes.data) setPendingListings(pendingRes.data);
+      if (allRes.data) setAllListings(allRes.data);
+      if (usersRes.data) setUsers(usersRes.data);
+      if (reportsRes.data) setReports(reportsRes.data);
+    } catch (e) {
+      console.error(e);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const handleApproveListing = async (listingId) => {
+    await listingsRepo.updateListing(listingId, { status: "approved", is_verified: true });
+    onShowToast?.("Listing approved and published! ✅", "success");
+    loadData();
+  };
+
+  const handleRejectListing = async (listingId) => {
+    await listingsRepo.updateListing(listingId, { status: "rejected" });
+    onShowToast?.("Listing marked as rejected.", "info");
+    loadData();
+  };
+
+  const handleDeleteListing = async (listingId) => {
+    if (confirm("Are you sure you want to permanently delete this listing?")) {
+      await listingsRepo.deleteListing(listingId);
+      onShowToast?.("Listing deleted.", "info");
+      loadData();
+    }
+  };
+
+  const handleToggleUserApproval = async (targetUserId, approved) => {
+    const { error } = await authRepo.setUserApproval(targetUserId, approved);
+    if (error) {
+      onShowToast?.(error, "error");
+    } else {
+      onShowToast?.(approved ? "User approved! They can now contribute." : "User access revoked.", "success");
+      loadData();
+    }
+  };
+
+  const handleResolveReport = async (reportId) => {
+    await reportsRepo.resolveReport(reportId);
+    onShowToast?.("Report marked as resolved.", "success");
+    loadData();
+  };
+
+  const pendingUsers = users.filter(u => !u.approved && u.role !== "admin");
+  const approvedUsers = users.filter(u => u.approved || u.role === "admin");
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-sheet" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "860px" }}>
+        {/* Header */}
+        <div className="modal-header">
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "#fef3c7", color: "#b45309", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Shield size={18} />
+            </div>
+            <div>
+              <h3 className="modal-title">Admin Management Portal</h3>
+              <span style={{ fontSize: "11px", color: "#64748b" }}>Control listings, users, and community reports</span>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <button className="btn-icon" onClick={loadData} title="Refresh data">
+              <RefreshCw size={15} />
+            </button>
+            <button className="modal-close-btn" onClick={onClose}>
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Navigation */}
+        <div style={{ display: "flex", borderBottom: "1px solid #e2e8f0", background: "#f8fafc", padding: "0 20px" }}>
+          <button
+            onClick={() => setActiveTab("pending")}
+            style={{
+              padding: "12px 16px",
+              fontSize: "13px",
+              fontWeight: "700",
+              color: activeTab === "pending" ? "#047857" : "#64748b",
+              borderBottom: activeTab === "pending" ? "2px solid #059669" : "2px solid transparent",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px"
+            }}
+          >
+            <span>Pending Listings</span>
+            {pendingListings.length > 0 && (
+              <span style={{ background: "#ef4444", color: "#fff", borderRadius: "999px", padding: "1px 7px", fontSize: "11px" }}>
+                {pendingListings.length}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab("users")}
+            style={{
+              padding: "12px 16px",
+              fontSize: "13px",
+              fontWeight: "700",
+              color: activeTab === "users" ? "#047857" : "#64748b",
+              borderBottom: activeTab === "users" ? "2px solid #059669" : "2px solid transparent",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px"
+            }}
+          >
+            <Users size={15} />
+            <span>Users & Approvals</span>
+            {pendingUsers.length > 0 && (
+              <span style={{ background: "#f59e0b", color: "#fff", borderRadius: "999px", padding: "1px 7px", fontSize: "11px" }}>
+                {pendingUsers.length}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab("reports")}
+            style={{
+              padding: "12px 16px",
+              fontSize: "13px",
+              fontWeight: "700",
+              color: activeTab === "reports" ? "#047857" : "#64748b",
+              borderBottom: activeTab === "reports" ? "2px solid #059669" : "2px solid transparent",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px"
+            }}
+          >
+            <AlertTriangle size={15} />
+            <span>Reports</span>
+            {reports.filter(r => r.status === "open").length > 0 && (
+              <span style={{ background: "#ef4444", color: "#fff", borderRadius: "999px", padding: "1px 7px", fontSize: "11px" }}>
+                {reports.filter(r => r.status === "open").length}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab("allListings")}
+            style={{
+              padding: "12px 16px",
+              fontSize: "13px",
+              fontWeight: "700",
+              color: activeTab === "allListings" ? "#047857" : "#64748b",
+              borderBottom: activeTab === "allListings" ? "2px solid #059669" : "2px solid transparent"
+            }}
+          >
+            All Listings ({allListings.length})
+          </button>
+        </div>
+
+        {/* Tab Contents */}
+        <div className="modal-body">
+          {/* 1. Pending Listings Queue */}
+          {activeTab === "pending" && (
+            <div>
+              {pendingListings.length === 0 ? (
+                <div className="empty-state">
+                  <CheckCircle size={44} color="#059669" style={{ marginBottom: "10px" }} />
+                  <div className="empty-state-title">No Pending Listings</div>
+                  <div className="empty-state-desc">The submission queue is clean! All submissions have been moderated.</div>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {pendingListings.map(listing => (
+                    <div
+                      key={listing.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "14px 16px",
+                        background: "#ffffff",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "12px",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                      }}
+                    >
+                      <div style={{ flex: 1, marginRight: "16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                          <span style={{ fontSize: "15px", fontWeight: "700", color: "#0f172a" }}>{listing.name}</span>
+                          <span style={{ fontSize: "11px", fontWeight: "600", padding: "2px 8px", background: "#fef3c7", color: "#b45309", borderRadius: "999px" }}>
+                            {listing.city_name}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px" }}>
+                          Locality: <strong>{listing.locality}</strong> • Phone: <strong>+91 {listing.phone}</strong>
+                        </div>
+                        <div style={{ fontSize: "12px", color: "#475569" }}>
+                          {listing.description}
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <button
+                          onClick={() => onOpenListingDetail(listing)}
+                          className="btn-icon"
+                          title="Preview details"
+                        >
+                          <Eye size={16} />
+                        </button>
+
+                        <button
+                          onClick={() => handleApproveListing(listing.id)}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            background: "#059669",
+                            color: "#ffffff",
+                            padding: "8px 14px",
+                            borderRadius: "8px",
+                            fontSize: "12px",
+                            fontWeight: "700"
+                          }}
+                        >
+                          <Check size={14} />
+                          <span>Approve</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleRejectListing(listing.id)}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            background: "#fee2e2",
+                            color: "#b91c1c",
+                            padding: "8px 12px",
+                            borderRadius: "8px",
+                            fontSize: "12px",
+                            fontWeight: "700"
+                          }}
+                        >
+                          <X size={14} />
+                          <span>Reject</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 2. User Accounts & Approvals */}
+          {activeTab === "users" && (
+            <div>
+              <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+                <button
+                  onClick={() => setUserSubTab("pendingUsers")}
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: "999px",
+                    fontSize: "12px",
+                    fontWeight: "700",
+                    background: userSubTab === "pendingUsers" ? "#064e3b" : "#f1f5f9",
+                    color: userSubTab === "pendingUsers" ? "#ffffff" : "#475569"
+                  }}
+                >
+                  Pending Users ({pendingUsers.length})
+                </button>
+                <button
+                  onClick={() => setUserSubTab("approvedUsers")}
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: "999px",
+                    fontSize: "12px",
+                    fontWeight: "700",
+                    background: userSubTab === "approvedUsers" ? "#064e3b" : "#f1f5f9",
+                    color: userSubTab === "approvedUsers" ? "#ffffff" : "#475569"
+                  }}
+                >
+                  Approved Accounts ({approvedUsers.length})
+                </button>
+              </div>
+
+              {userSubTab === "pendingUsers" ? (
+                pendingUsers.length === 0 ? (
+                  <div className="empty-state">
+                    <CheckCircle size={40} color="#059669" style={{ marginBottom: "8px" }} />
+                    <div className="empty-state-title">No pending users</div>
+                    <div className="empty-state-desc">All user signups have been reviewed!</div>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    {pendingUsers.map(u => (
+                      <div
+                        key={u.id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "12px 16px",
+                          background: "#ffffff",
+                          border: "1px solid #fed7aa",
+                          borderRadius: "10px"
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontSize: "14px", fontWeight: "700", color: "#0f172a" }}>{u.full_name}</div>
+                          <div style={{ fontSize: "12px", color: "#64748b" }}>
+                            Email: <strong>{u.email}</strong> • Phone: <strong>+91 {u.phone || "N/A"}</strong>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => handleToggleUserApproval(u.id, true)}
+                          style={{
+                            background: "#059669",
+                            color: "#ffffff",
+                            padding: "6px 14px",
+                            borderRadius: "8px",
+                            fontSize: "12px",
+                            fontWeight: "700"
+                          }}
+                        >
+                          Approve Account
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {approvedUsers.map(u => (
+                    <div
+                      key={u.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "12px 16px",
+                        background: "#ffffff",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "10px"
+                      }}
+                    >
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <span style={{ fontSize: "14px", fontWeight: "700", color: "#0f172a" }}>{u.full_name}</span>
+                          {u.role === "admin" && (
+                            <span style={{ background: "#fef3c7", color: "#b45309", fontSize: "10px", padding: "2px 6px", borderRadius: "999px", fontWeight: "800" }}>
+                              ADMIN
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: "12px", color: "#64748b" }}>
+                          {u.email} • +91 {u.phone || "N/A"}
+                        </div>
+                      </div>
+
+                      {u.role !== "admin" && (
+                        <button
+                          onClick={() => handleToggleUserApproval(u.id, false)}
+                          style={{
+                            background: "#fee2e2",
+                            color: "#b91c1c",
+                            padding: "6px 12px",
+                            borderRadius: "8px",
+                            fontSize: "12px",
+                            fontWeight: "600"
+                          }}
+                        >
+                          Revoke Access
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 3. Reports Queue */}
+          {activeTab === "reports" && (
+            <div>
+              {reports.length === 0 ? (
+                <div className="empty-state">
+                  <ShieldCheck size={40} color="#059669" style={{ marginBottom: "8px" }} />
+                  <div className="empty-state-title">No community reports</div>
+                  <div className="empty-state-desc">No listings have been flagged for incorrect info.</div>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {reports.map(rep => (
+                    <div
+                      key={rep.id}
+                      style={{
+                        padding: "14px 16px",
+                        background: "#ffffff",
+                        border: rep.status === "open" ? "1px solid #fecaca" : "1px solid #e2e8f0",
+                        borderRadius: "12px"
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                        <div style={{ fontSize: "14px", fontWeight: "700", color: "#0f172a" }}>
+                          Listing: <strong>{rep.listing_name}</strong>
+                        </div>
+                        <span style={{
+                          fontSize: "11px",
+                          fontWeight: "700",
+                          padding: "2px 8px",
+                          borderRadius: "999px",
+                          background: rep.status === "open" ? "#fee2e2" : "#ecfdf5",
+                          color: rep.status === "open" ? "#b91c1c" : "#047857"
+                        }}>
+                          {rep.status.toUpperCase()}
+                        </span>
+                      </div>
+
+                      <div style={{ fontSize: "13px", color: "#475569", marginBottom: "6px" }}>
+                        Reason: <strong>{rep.reason}</strong> — "{rep.details}"
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "11px", color: "#94a3b8" }}>
+                        <span>Reported by: {rep.user_name || "Community member"}</span>
+                        {rep.status === "open" && (
+                          <button
+                            onClick={() => handleResolveReport(rep.id)}
+                            style={{
+                              background: "#059669",
+                              color: "#ffffff",
+                              padding: "4px 10px",
+                              borderRadius: "6px",
+                              fontSize: "11px",
+                              fontWeight: "700"
+                            }}
+                          >
+                            Mark Resolved
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 4. All Directory Listings */}
+          {activeTab === "allListings" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {allListings.map(lst => (
+                <div
+                  key={lst.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "10px 14px",
+                    background: "#ffffff",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "10px"
+                  }}
+                >
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span style={{ fontSize: "14px", fontWeight: "700", color: "#0f172a" }}>{lst.name}</span>
+                      <span style={{
+                        fontSize: "10px",
+                        fontWeight: "700",
+                        padding: "1px 6px",
+                        borderRadius: "999px",
+                        background: lst.status === "approved" ? "#ecfdf5" : "#fef3c7",
+                        color: lst.status === "approved" ? "#047857" : "#b45309"
+                      }}>
+                        {lst.status}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: "12px", color: "#64748b" }}>
+                      {lst.city_name} • {lst.locality} • +91 {lst.phone}
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <button className="btn-icon" onClick={() => onOpenListingDetail(lst)}>
+                      <Eye size={15} />
+                    </button>
+                    <button
+                      className="btn-icon"
+                      onClick={() => handleDeleteListing(lst.id)}
+                      style={{ color: "#ef4444" }}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

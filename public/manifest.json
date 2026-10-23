@@ -1,0 +1,17 @@
+{
+  "name": "Xewa: Local Services, Found Fast",
+  "short_name": "Xewa",
+  "description": "Verified local services directory for Tezpur and Nagaon, Assam",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#064e3b",
+  "theme_color": "#047857",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "64x64 128x128 256x256 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

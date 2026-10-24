@@ -16,9 +16,11 @@ export default function PendingApprovalModal({
     const { data } = await authRepo.fetchUserProfile(currentUser.id);
     setChecking(false);
 
-    if (data?.approved) {
+    if (data?.approved || data?.role === "admin") {
+      const updatedUser = { ...currentUser, ...data, approved: true };
+      localStorage.setItem("xewa_current_user", JSON.stringify(updatedUser));
       onShowToast?.("Hooray! Your account has been approved by an administrator! 🎉", "success");
-      onApproved?.(data);
+      onApproved?.(updatedUser);
       onClose();
     } else {
       onShowToast?.("Still waiting for admin review. Thank you for your patience!", "info");

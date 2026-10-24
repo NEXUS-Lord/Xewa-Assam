@@ -4,7 +4,7 @@
 
 **App name:** Xewa ("xewa" means "service" in Assamese). **Full title:** *Xewa: Local Services, Found Fast*. The name and tagline live in two constants, `kAppName` ("Xewa") and `kAppTagline` ("Local Services, Found Fast"), in `lib/core/constants.dart`, so changing either is a one-line edit. Do not hardcode them anywhere else. Show the tagline under the app name on the splash screen and login screen, and use the full title as the `README.md` heading.
 
-**Created:** 2026-10-03  |  **Owner:** NEXUS (student, B.Voc IT, Gauhati University)  |  **Purpose:** semester project, designed to grow into a real product.
+**Created:** 2026-10-03  |  **Owner:** Nilam Bora (student, B.Voc IT, Dr. B.K.B. College)  |  **Purpose:** semester project, designed to grow into a real product.
 
 ---
 

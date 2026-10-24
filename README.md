@@ -1,7 +1,7 @@
 # Xewa: Local Services, Found Fast
 
 > **A local services directory dedicated to small towns of Assam, starting with Tezpur and Nagaon.**  
-> *Semester Project for NEXUS | B.Voc IT, Gauhati University*
+> *Semester Project by Nilam Bora | B.Voc IT, Dr. B.K.B. College*
 
 ---
 

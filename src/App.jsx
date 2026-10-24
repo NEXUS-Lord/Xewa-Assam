@@ -410,7 +410,7 @@ export default function App() {
           margin: "0 auto 14px"
         }} />
         <p style={{ fontSize: "11px", color: "#475569" }}>
-          Semester Project for NEXUS | B.Voc IT, Gauhati University
+          Semester Project by Nilam Bora | B.Voc IT, Dr. B.K.B. College
         </p>
       </footer>
 

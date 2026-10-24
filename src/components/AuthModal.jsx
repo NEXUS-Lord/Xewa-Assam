@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, User, Lock, Mail, Phone, ShieldCheck, AlertCircle, Sparkles } from "lucide-react";
+import { X, User, Lock, Mail, Phone, ShieldCheck, AlertCircle } from "lucide-react";
 import { authRepo } from "../data/authRepo";
 import { isValidIndianPhone, cleanPhone } from "../core/constants";
 
@@ -64,14 +64,6 @@ export default function AuthModal({
     }
   };
 
-  const handleQuickDemo = (demoEmail) => {
-    const user = authRepo.quickSwitchDemoUser(demoEmail);
-    if (user) {
-      onShowToast?.(`Logged in as ${user.full_name} (${user.role})`, "success");
-      onLoginSuccess(user);
-      onClose();
-    }
-  };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -232,76 +224,6 @@ export default function AuthModal({
               </button>
             </form>
           )}
-
-          {/* Quick Demo Switcher for Evaluation */}
-          <div style={{ marginTop: "24px", paddingTop: "18px", borderTop: "1px dashed #cbd5e1" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: "700", color: "#64748b", marginBottom: "10px" }}>
-              <Sparkles size={14} color="#f59e0b" />
-              <span>Instant Test Logins (1-Click)</span>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              <button
-                type="button"
-                onClick={() => handleQuickDemo("admin@xewa.local")}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                  background: "#fef3c7",
-                  border: "1px solid #fde68a",
-                  color: "#92400e",
-                  fontSize: "12px",
-                  fontWeight: "700"
-                }}
-              >
-                <span>👑 Admin (NEXUS)</span>
-                <span style={{ fontSize: "11px", opacity: 0.8 }}>Full Control</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemo("contributor@xewa.local")}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                  background: "#ecfdf5",
-                  border: "1px solid #a7f3d0",
-                  color: "#065f46",
-                  fontSize: "12px",
-                  fontWeight: "700"
-                }}
-              >
-                <span>✅ Approved Contributor (Bikram)</span>
-                <span style={{ fontSize: "11px", opacity: 0.8 }}>Can Post & Edit</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemo("newuser@xewa.local")}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                  background: "#f1f5f9",
-                  border: "1px solid #e2e8f0",
-                  color: "#334155",
-                  fontSize: "12px",
-                  fontWeight: "600"
-                }}
-              >
-                <span>⏳ Unapproved User (Rupjyoti)</span>
-                <span style={{ fontSize: "11px", opacity: 0.8 }}>Waiting Approval</span>
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>

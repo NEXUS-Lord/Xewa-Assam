@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   X, Shield, CheckCircle, XCircle, AlertTriangle, Users,
-  ListFilter, Plus, RefreshCw, Trash2, Eye, ShieldAlert, Check
+  ListFilter, Plus, RefreshCw, Trash2, Eye, ShieldAlert, Check, Database
 } from "lucide-react";
 import { listingsRepo } from "../data/listingsRepo";
 import { authRepo } from "../data/authRepo";
@@ -12,6 +12,7 @@ export default function AdminDashboard({
   currentUser,
   onClose,
   onOpenListingDetail,
+  onOpenSupabaseConfig,
   onShowToast
 }) {
   const [activeTab, setActiveTab] = useState("pending"); // 'pending' | 'users' | 'reports' | 'allListings'
@@ -101,6 +102,14 @@ export default function AdminDashboard({
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <button
+              className="btn-icon"
+              onClick={onOpenSupabaseConfig}
+              title="Database / Supabase Backend Settings"
+              style={{ color: "#059669" }}
+            >
+              <Database size={15} />
+            </button>
             <button className="btn-icon" onClick={loadData} title="Refresh data">
               <RefreshCw size={15} />
             </button>

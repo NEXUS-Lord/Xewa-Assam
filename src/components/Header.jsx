@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { MapPin, Plus, User, Shield, ChevronDown, Database, LogOut, CheckCircle2 } from "lucide-react";
+import { MapPin, Plus, User, Shield, ChevronDown, LogOut, CheckCircle2 } from "lucide-react";
 import { kAppName, kAppTagline, CITIES } from "../core/constants";
-import { isSupabaseConfigured } from "../core/supabase";
 
 export default function Header({
   selectedCity,
@@ -10,11 +9,9 @@ export default function Header({
   onOpenSuggest,
   onOpenAuth,
   onOpenProfile,
-  onOpenAdmin,
-  onOpenSupabaseConfig
+  onOpenAdmin
 }) {
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
-  const isConnected = isSupabaseConfigured();
 
   return (
     <header className="navbar">
@@ -87,26 +84,6 @@ export default function Header({
           )}
         </div>
 
-        {/* Supabase status badge */}
-        <button
-          onClick={onOpenSupabaseConfig}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "5px",
-            fontSize: "11px",
-            fontWeight: "600",
-            padding: "5px 10px",
-            borderRadius: "999px",
-            background: isConnected ? "rgba(16,185,129,0.12)" : "rgba(245,158,11,0.12)",
-            color: isConnected ? "#34d399" : "#fbbf24",
-            border: `1px solid ${isConnected ? "rgba(16,185,129,0.25)" : "rgba(245,158,11,0.25)"}`
-          }}
-          title="Supabase Backend Status (Click to configure)"
-        >
-          <Database size={12} />
-          <span>{isConnected ? "Supabase Active" : "Local Demo Mode"}</span>
-        </button>
       </div>
 
       <div className="nav-actions">

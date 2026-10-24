@@ -187,7 +187,6 @@ export default function App() {
         onOpenAuth={() => setAuthModalOpen(true)}
         onOpenProfile={() => setProfileModalOpen(true)}
         onOpenAdmin={() => setAdminModalOpen(true)}
-        onOpenSupabaseConfig={() => setSupabaseConfigOpen(true)}
       />
 
       {/* Hero Section */}
@@ -439,6 +438,7 @@ export default function App() {
           currentUser={currentUser}
           onClose={() => setAdminModalOpen(false)}
           onOpenListingDetail={(lst) => setActiveListingDetail(lst)}
+          onOpenSupabaseConfig={() => setSupabaseConfigOpen(true)}
           onShowToast={showToast}
         />
       )}

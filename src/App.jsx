@@ -65,6 +65,7 @@ export default function App() {
   const [reportListing, setReportListing] = useState(null);
   const [supabaseConfigOpen, setSupabaseConfigOpen] = useState(false);
   const [pendingApprovalModalOpen, setPendingApprovalModalOpen] = useState(false);
+  const [emailConfirmedModal, setEmailConfirmedModal] = useState(false);
 
   // Toast notifications
   const [toasts, setToasts] = useState([]);
@@ -76,6 +77,31 @@ export default function App() {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 4000);
   };
+
+  // Subscribe to live auth changes and handle email verification redirect
+  useEffect(() => {
+    const hash = window.location.hash || "";
+    const search = window.location.search || "";
+    if (hash.includes("type=signup") || hash.includes("type=recovery") || search.includes("type=signup")) {
+      setEmailConfirmedModal(true);
+      showToast("Email address verified successfully! Welcome to Xewa 🎉", "success");
+      try {
+        window.history.replaceState(null, "", window.location.pathname);
+      } catch (e) {}
+    }
+
+    const sub = authRepo.subscribeToAuthChanges((event, user) => {
+      if (user) {
+        setCurrentUser(user);
+      } else if (event === "SIGNED_OUT") {
+        setCurrentUser(null);
+      }
+    });
+
+    return () => {
+      sub?.unsubscribe?.();
+    };
+  }, []);
 
   // City selection handler
   const handleSelectCity = (city) => {
@@ -468,6 +494,29 @@ export default function App() {
           onApproved={(updated) => setCurrentUser(updated)}
           onShowToast={showToast}
         />
+      )}
+
+      {emailConfirmedModal && (
+        <div className="modal-overlay" onClick={() => setEmailConfirmedModal(false)}>
+          <div className="modal-sheet" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "440px", textAlign: "center", padding: "32px 24px" }}>
+            <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "#ecfdf5", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+              <CheckCircle2 size={36} />
+            </div>
+            <h3 style={{ fontSize: "22px", fontWeight: "800", color: "#0f172a", marginBottom: "8px" }}>
+              Email Confirmed! 🎉
+            </h3>
+            <p style={{ fontSize: "14px", color: "#475569", lineHeight: "1.5", marginBottom: "24px" }}>
+              Thank you for verifying your email address. Your account is active. You can now explore verified services or manage your submissions on Xewa.
+            </p>
+            <button
+              className="btn-primary"
+              style={{ width: "100%", justifyContent: "center" }}
+              onClick={() => setEmailConfirmedModal(false)}
+            >
+              Explore Xewa Services
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Toast Notifications */}

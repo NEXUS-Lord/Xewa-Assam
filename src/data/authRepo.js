@@ -216,5 +216,30 @@ export const authRepo = {
       return user;
     }
     return null;
+  },
+
+  subscribeToAuthChanges(callback) {
+    const supabase = getSupabaseClient();
+    if (supabase && isSupabaseConfigured()) {
+      const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (session?.user && (event === "SIGNED_IN" || event === "USER_UPDATED")) {
+          const { data: profile } = await this.fetchUserProfile(session.user.id);
+          const userObj = {
+            id: session.user.id,
+            email: session.user.email,
+            full_name: profile?.full_name || session.user.user_metadata?.full_name || "User",
+            phone: profile?.phone || session.user.user_metadata?.phone || "",
+            role: profile?.role || "user",
+            approved: profile?.approved ?? false
+          };
+          localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userObj));
+          callback(event, userObj);
+        } else if (event === "SIGNED_OUT") {
+          callback(event, null);
+        }
+      });
+      return data?.subscription;
+    }
+    return { unsubscribe: () => {} };
   }
 };

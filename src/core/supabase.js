@@ -1,6 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 
-// Read from environment variables or custom localStorage override
+const DEFAULT_SUPABASE_URL = "https://yqsslgolxulhvoxwsadh.supabase.co";
+const DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlxc3NsZ29seHVsaHZveHdzYWRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NTUxNjgsImV4cCI6MjEwODMzMTE2OH0.jlylz8wn7bZe_SoKjg9N2na2G7jYDIkOiKyCpX82TXA";
+
+// Read from environment variables, production default, or custom localStorage override
 export function getSupabaseCredentials() {
   const localConfigStr = localStorage.getItem("xewa_supabase_config");
   if (localConfigStr) {
@@ -14,8 +17,8 @@ export function getSupabaseCredentials() {
     }
   }
 
-  const envUrl = import.meta.env.VITE_SUPABASE_URL;
-  const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const envUrl = import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+  const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
   if (envUrl && envKey && envUrl.startsWith("https://") && !envUrl.includes("your-project-id")) {
     return { url: envUrl, anonKey: envKey, source: "env" };
   }

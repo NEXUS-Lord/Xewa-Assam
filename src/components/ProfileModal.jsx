@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   X, User, Mail, Phone, LogOut, Shield, Plus, Trash2,
-  CheckCircle2, Clock, XCircle, Image as ImageIcon
+  CheckCircle2, Clock, XCircle, Image as ImageIcon, Edit2, Check, MessageSquare
 } from "lucide-react";
 import { listingsRepo } from "../data/listingsRepo";
 import { authRepo } from "../data/authRepo";
@@ -18,6 +18,10 @@ export default function ProfileModal({
   const [loading, setLoading] = useState(false);
   const [managingPhotosListing, setManagingPhotosListing] = useState(null);
   const [newPhotoUrl, setNewPhotoUrl] = useState("");
+  const [isEditingContact, setIsEditingContact] = useState(false);
+  const [editPhone, setEditPhone] = useState(currentUser.phone || "");
+  const [editWhatsapp, setEditWhatsapp] = useState(currentUser.whatsapp || currentUser.phone || "");
+  const [savingContact, setSavingContact] = useState(false);
 
   const loadSubmissions = async () => {
     if (!currentUser) return;
@@ -54,6 +58,23 @@ export default function ProfileModal({
     setManagingPhotosListing({ ...listing, photos: updated });
   };
 
+  const handleSaveContact = async () => {
+    setSavingContact(true);
+    const { error } = await authRepo.updateContactDetails(currentUser.id, {
+      phone: editPhone.trim(),
+      whatsapp: editWhatsapp.trim()
+    });
+    setSavingContact(false);
+    if (error) {
+      onShowToast?.("Failed to update contact: " + error, "error");
+    } else {
+      currentUser.phone = editPhone.trim();
+      currentUser.whatsapp = editWhatsapp.trim();
+      setIsEditingContact(false);
+      onShowToast?.("Contact numbers updated successfully! 🎉", "success");
+    }
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-sheet" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "620px" }}>
@@ -71,74 +92,190 @@ export default function ProfileModal({
           {/* User Profile Card */}
           <div
             style={{
-              padding: "16px",
+              padding: "18px",
               background: "#f8fafc",
               border: "1px solid #e2e8f0",
               borderRadius: "14px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
               marginBottom: "20px"
             }}
           >
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                <h4 style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a" }}>{currentUser.full_name}</h4>
-                {currentUser.role === "admin" && (
-                  <span style={{ fontSize: "10px", fontWeight: "800", background: "#fef3c7", color: "#b45309", padding: "2px 8px", borderRadius: "999px" }}>
-                    ADMIN
-                  </span>
-                )}
-                {currentUser.approved && (
-                  <span style={{ fontSize: "10px", fontWeight: "700", background: "#ecfdf5", color: "#047857", padding: "2px 8px", borderRadius: "999px" }}>
-                    APPROVED
-                  </span>
-                )}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px", flexWrap: "wrap", gap: "8px" }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                  <h4 style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a" }}>{currentUser.full_name}</h4>
+                  {currentUser.role === "admin" && (
+                    <span style={{ fontSize: "10px", fontWeight: "800", background: "#fef3c7", color: "#b45309", padding: "2px 8px", borderRadius: "999px" }}>
+                      ADMIN
+                    </span>
+                  )}
+                  {currentUser.approved && (
+                    <span style={{ fontSize: "10px", fontWeight: "700", background: "#ecfdf5", color: "#047857", padding: "2px 8px", borderRadius: "999px" }}>
+                      APPROVED
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: "12px", color: "#64748b" }}>
+                  {currentUser.email}
+                </div>
               </div>
-              <div style={{ fontSize: "12px", color: "#64748b" }}>
-                {currentUser.email} • +91 {currentUser.phone || "No phone added"}
-              </div>
-            </div>
 
-            <div style={{ display: "flex", gap: "8px" }}>
-              {currentUser.role === "admin" && (
+              <div style={{ display: "flex", gap: "8px" }}>
+                {currentUser.role === "admin" && (
+                  <button
+                    onClick={() => { onClose(); onOpenAdmin(); }}
+                    style={{
+                      padding: "7px 12px",
+                      background: "#059669",
+                      color: "#ffffff",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                      fontWeight: "700",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px"
+                    }}
+                  >
+                    <Shield size={13} />
+                    <span>Admin</span>
+                  </button>
+                )}
+
                 <button
-                  onClick={() => { onClose(); onOpenAdmin(); }}
+                  onClick={onLogout}
                   style={{
                     padding: "7px 12px",
-                    background: "#059669",
-                    color: "#ffffff",
+                    background: "#fee2e2",
+                    color: "#b91c1c",
                     borderRadius: "8px",
                     fontSize: "12px",
-                    fontWeight: "700",
+                    fontWeight: "600",
                     display: "flex",
                     alignItems: "center",
                     gap: "4px"
                   }}
                 >
-                  <Shield size={13} />
-                  <span>Admin</span>
+                  <LogOut size={13} />
+                  <span>Log Out</span>
                 </button>
-              )}
-
-              <button
-                onClick={onLogout}
-                style={{
-                  padding: "7px 12px",
-                  background: "#fee2e2",
-                  color: "#b91c1c",
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                  fontWeight: "700",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px"
-                }}
-              >
-                <LogOut size={13} />
-                <span>Logout</span>
-              </button>
+              </div>
             </div>
+
+            {/* Contact Numbers Display / Editor */}
+            {!isEditingContact ? (
+              <div style={{
+                background: "#ffffff",
+                border: "1px solid #e2e8f0",
+                borderRadius: "10px",
+                padding: "10px 14px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: "8px"
+              }}>
+                <div style={{ fontSize: "12px", display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+                  <span style={{ color: "#475569" }}>
+                    📞 Call: <strong style={{ color: "#0f172a" }}>+91 {currentUser.phone || "Not set"}</strong>
+                  </span>
+                  <span style={{ color: "#16a34a" }}>
+                    💬 WhatsApp: <strong style={{ color: "#0f172a" }}>+91 {currentUser.whatsapp || currentUser.phone || "Not set"}</strong>
+                  </span>
+                </div>
+                <button
+                  onClick={() => setIsEditingContact(true)}
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: "700",
+                    color: "#059669",
+                    background: "#ecfdf5",
+                    padding: "4px 10px",
+                    borderRadius: "6px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px"
+                  }}
+                >
+                  <Edit2 size={11} />
+                  <span>Edit Numbers</span>
+                </button>
+              </div>
+            ) : (
+              <div style={{
+                background: "#ffffff",
+                border: "1.5px solid #86efac",
+                borderRadius: "10px",
+                padding: "12px 14px",
+                marginTop: "6px"
+              }}>
+                <div style={{ fontSize: "12px", fontWeight: "700", color: "#166534", marginBottom: "8px" }}>
+                  Update Your Contact Numbers:
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
+                  <div>
+                    <label style={{ fontSize: "11px", fontWeight: "700", color: "#475569", display: "block", marginBottom: "3px" }}>
+                      Calling Phone:
+                    </label>
+                    <input
+                      type="tel"
+                      className="form-input"
+                      style={{ padding: "6px 10px", fontSize: "13px" }}
+                      value={editPhone}
+                      onChange={(e) => setEditPhone(e.target.value)}
+                      placeholder="10 digits"
+                      maxLength={10}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: "11px", fontWeight: "700", color: "#166534", display: "block", marginBottom: "3px" }}>
+                      WhatsApp Number:
+                    </label>
+                    <input
+                      type="tel"
+                      className="form-input"
+                      style={{ padding: "6px 10px", fontSize: "13px", borderColor: "#86efac" }}
+                      value={editWhatsapp}
+                      onChange={(e) => setEditWhatsapp(e.target.value)}
+                      placeholder="10 digits"
+                      maxLength={10}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                  <button
+                    onClick={() => setIsEditingContact(false)}
+                    style={{
+                      padding: "6px 12px",
+                      background: "#f1f5f9",
+                      color: "#475569",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      fontWeight: "600"
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveContact}
+                    disabled={savingContact}
+                    style={{
+                      padding: "6px 14px",
+                      background: "#059669",
+                      color: "#ffffff",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      fontWeight: "700",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px"
+                    }}
+                  >
+                    <Check size={13} />
+                    <span>{savingContact ? "Saving..." : "Save Changes"}</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Manage Photos Sub-view */}

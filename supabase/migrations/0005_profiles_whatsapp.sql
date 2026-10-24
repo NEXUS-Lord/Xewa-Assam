@@ -27,3 +27,6 @@ begin
     whatsapp = excluded.whatsapp;
   return new;
 end; $$;
+
+-- 4. Allow users to update their own contact details (phone, whatsapp)
+grant update (full_name, phone, whatsapp) on public.profiles to authenticated;

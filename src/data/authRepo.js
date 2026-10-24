@@ -234,6 +234,7 @@ export const authRepo = {
             email: session.user.email,
             full_name: profile?.full_name || session.user.user_metadata?.full_name || "User",
             phone: profile?.phone || session.user.user_metadata?.phone || "",
+            whatsapp: profile?.whatsapp || session.user.user_metadata?.whatsapp || profile?.phone || "",
             role: profile?.role || "user",
             approved: profile?.approved ?? false
           };
@@ -246,5 +247,39 @@ export const authRepo = {
       return data?.subscription;
     }
     return { unsubscribe: () => {} };
+  },
+
+  async updateContactDetails(userId, { phone, whatsapp }) {
+    const supabase = getSupabaseClient();
+    if (supabase && isSupabaseConfigured()) {
+      try {
+        const { error } = await supabase
+          .from("profiles")
+          .update({ phone, whatsapp })
+          .eq("id", userId);
+        if (error) throw error;
+      } catch (err) {
+        console.warn("updateContactDetails supabase error:", err.message);
+        return { error: err.message };
+      }
+    }
+
+    // Update local cache
+    const current = this.getCurrentSessionUser();
+    if (current && current.id === userId) {
+      current.phone = phone;
+      current.whatsapp = whatsapp;
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(current));
+    }
+
+    const users = getLocalUsers();
+    const target = users.find(u => u.id === userId);
+    if (target) {
+      target.phone = phone;
+      target.whatsapp = whatsapp;
+      saveLocalUsers(users);
+    }
+
+    return { error: null };
   }
 };

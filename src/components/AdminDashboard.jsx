@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import {
   X, Shield, CheckCircle, XCircle, AlertTriangle, Users,
-  ListFilter, Plus, RefreshCw, Trash2, Eye, ShieldAlert, Check, Database
+  ListFilter, Plus, RefreshCw, Trash2, Eye, ShieldAlert, Check, Database, MessageSquare
 } from "lucide-react";
 import { listingsRepo } from "../data/listingsRepo";
 import { authRepo } from "../data/authRepo";
 import { reportsRepo } from "../data/reportsRepo";
 import { CITIES, CATEGORIES } from "../core/constants";
+import { getUserApprovalWhatsAppUrl } from "../core/whatsappAlert";
 
 export default function AdminDashboard({
   currentUser,
@@ -74,6 +75,15 @@ export default function AdminDashboard({
     } else {
       onShowToast?.(approved ? "User approved! They can now contribute." : "User access revoked.", "success");
       loadData();
+    }
+  };
+
+  const handleApproveAndNotifyWhatsApp = async (user) => {
+    await handleToggleUserApproval(user.id, true);
+    const waUrl = getUserApprovalWhatsAppUrl(user);
+    if (waUrl) {
+      window.open(waUrl, "_blank");
+      onShowToast?.(`Approved! Opening WhatsApp to notify ${user.full_name}`, "success");
     }
   };
 
@@ -342,32 +352,62 @@ export default function AdminDashboard({
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
-                          padding: "12px 16px",
+                          padding: "14px 16px",
                           background: "#ffffff",
                           border: "1px solid #fed7aa",
-                          borderRadius: "10px"
+                          borderRadius: "12px",
+                          gap: "12px",
+                          flexWrap: "wrap"
                         }}
                       >
-                        <div>
-                          <div style={{ fontSize: "14px", fontWeight: "700", color: "#0f172a" }}>{u.full_name}</div>
-                          <div style={{ fontSize: "12px", color: "#64748b" }}>
-                            Email: <strong>{u.email}</strong> • Phone: <strong>+91 {u.phone || "N/A"}</strong>
+                        <div style={{ flex: 1, minWidth: "220px" }}>
+                          <div style={{ fontSize: "15px", fontWeight: "700", color: "#0f172a", marginBottom: "4px" }}>
+                            {u.full_name}
+                          </div>
+                          <div style={{ fontSize: "12px", color: "#64748b", display: "flex", flexDirection: "column", gap: "2px" }}>
+                            <div>Email: <strong style={{ color: "#0f172a" }}>{u.email}</strong></div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", marginTop: "2px" }}>
+                              <span>📞 Call: <strong style={{ color: "#0f172a" }}>+91 {u.phone || "N/A"}</strong></span>
+                              <span style={{ color: "#16a34a" }}>💬 WhatsApp: <strong>+91 {u.whatsapp || u.phone || "N/A"}</strong></span>
+                            </div>
                           </div>
                         </div>
 
-                        <button
-                          onClick={() => handleToggleUserApproval(u.id, true)}
-                          style={{
-                            background: "#059669",
-                            color: "#ffffff",
-                            padding: "6px 14px",
-                            borderRadius: "8px",
-                            fontSize: "12px",
-                            fontWeight: "700"
-                          }}
-                        >
-                          Approve Account
-                        </button>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                          <button
+                            onClick={() => handleApproveAndNotifyWhatsApp(u)}
+                            style={{
+                              background: "linear-gradient(135deg, #16a34a, #15803d)",
+                              color: "#ffffff",
+                              padding: "8px 14px",
+                              borderRadius: "8px",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              boxShadow: "0 2px 8px rgba(22, 163, 74, 0.25)"
+                            }}
+                            title="Approve user and send instant approval message on WhatsApp"
+                          >
+                            <MessageSquare size={14} />
+                            <span>Approve & WhatsApp</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleToggleUserApproval(u.id, true)}
+                            style={{
+                              background: "#059669",
+                              color: "#ffffff",
+                              padding: "8px 14px",
+                              borderRadius: "8px",
+                              fontSize: "12px",
+                              fontWeight: "700"
+                            }}
+                          >
+                            Approve Only
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -384,10 +424,12 @@ export default function AdminDashboard({
                         padding: "12px 16px",
                         background: "#ffffff",
                         border: "1px solid #e2e8f0",
-                        borderRadius: "10px"
+                        borderRadius: "10px",
+                        gap: "10px",
+                        flexWrap: "wrap"
                       }}
                     >
-                      <div>
+                      <div style={{ flex: 1, minWidth: "200px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                           <span style={{ fontSize: "14px", fontWeight: "700", color: "#0f172a" }}>{u.full_name}</span>
                           {u.role === "admin" && (
@@ -396,26 +438,53 @@ export default function AdminDashboard({
                             </span>
                           )}
                         </div>
-                        <div style={{ fontSize: "12px", color: "#64748b" }}>
-                          {u.email} • +91 {u.phone || "N/A"}
+                        <div style={{ fontSize: "12px", color: "#64748b", marginTop: "3px" }}>
+                          {u.email} • Call: +91 {u.phone || "N/A"} • WA: +91 {u.whatsapp || u.phone || "N/A"}
                         </div>
                       </div>
 
-                      {u.role !== "admin" && (
-                        <button
-                          onClick={() => handleToggleUserApproval(u.id, false)}
-                          style={{
-                            background: "#fee2e2",
-                            color: "#b91c1c",
-                            padding: "6px 12px",
-                            borderRadius: "8px",
-                            fontSize: "12px",
-                            fontWeight: "600"
-                          }}
-                        >
-                          Revoke Access
-                        </button>
-                      )}
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        {(u.whatsapp || u.phone) && (
+                          <button
+                            onClick={() => {
+                              const num = (u.whatsapp || u.phone).replace(/\D/g, "");
+                              window.open(`https://wa.me/91${num}`, "_blank");
+                            }}
+                            style={{
+                              background: "rgba(37, 211, 102, 0.12)",
+                              border: "1px solid rgba(37, 211, 102, 0.3)",
+                              color: "#15803d",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              fontSize: "11px",
+                              fontWeight: "700",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px"
+                            }}
+                            title="Chat with user on WhatsApp"
+                          >
+                            <MessageSquare size={13} />
+                            <span>WhatsApp</span>
+                          </button>
+                        )}
+
+                        {u.role !== "admin" && (
+                          <button
+                            onClick={() => handleToggleUserApproval(u.id, false)}
+                            style={{
+                              background: "#fee2e2",
+                              color: "#b91c1c",
+                              padding: "6px 12px",
+                              borderRadius: "8px",
+                              fontSize: "12px",
+                              fontWeight: "600"
+                            }}
+                          >
+                            Revoke Access
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

@@ -69,6 +69,7 @@ export default function App() {
 
   // Toast notifications
   const [toasts, setToasts] = useState([]);
+  const [pendingAdminCount, setPendingAdminCount] = useState(0);
 
   const showToast = (message, type = "success") => {
     const id = Date.now();
@@ -77,6 +78,20 @@ export default function App() {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 4000);
   };
+
+  // Check pending user approvals for admin
+  useEffect(() => {
+    if (currentUser?.role === "admin") {
+      authRepo.getAllProfiles().then(({ data }) => {
+        if (data) {
+          const pending = data.filter(u => !u.approved && u.role !== "admin");
+          setPendingAdminCount(pending.length);
+        }
+      });
+    } else {
+      setPendingAdminCount(0);
+    }
+  }, [currentUser, adminModalOpen]);
 
   // Subscribe to live auth changes and handle email verification redirect
   useEffect(() => {
@@ -209,6 +224,7 @@ export default function App() {
         selectedCity={selectedCity}
         onSelectCity={handleSelectCity}
         currentUser={currentUser}
+        pendingCount={pendingAdminCount}
         onOpenSuggest={handleOpenSuggest}
         onOpenAuth={() => setAuthModalOpen(true)}
         onOpenProfile={() => setProfileModalOpen(true)}

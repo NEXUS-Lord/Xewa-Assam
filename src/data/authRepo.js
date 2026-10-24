@@ -38,7 +38,7 @@ export const authRepo = {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, full_name, email, phone, role, approved, created_at")
+          .select("id, full_name, email, phone, whatsapp, role, approved, created_at")
           .eq("id", userId)
           .single();
         if (error) throw error;
@@ -69,6 +69,7 @@ export const authRepo = {
           email: authData.user.email,
           full_name: profile?.full_name || authData.user.user_metadata?.full_name || "User",
           phone: profile?.phone || authData.user.user_metadata?.phone || "",
+          whatsapp: profile?.whatsapp || authData.user.user_metadata?.whatsapp || profile?.phone || "",
           role: profile?.role || "user",
           approved: profile?.approved ?? false
         };
@@ -90,7 +91,8 @@ export const authRepo = {
     return { data: user, error: null };
   },
 
-  async signup({ email, password, full_name, phone }) {
+  async signup({ email, password, full_name, phone, whatsapp }) {
+    const finalWhatsApp = whatsapp || phone;
     const supabase = getSupabaseClient();
     if (supabase && isSupabaseConfigured()) {
       try {
@@ -100,7 +102,8 @@ export const authRepo = {
           options: {
             data: {
               full_name,
-              phone
+              phone,
+              whatsapp: finalWhatsApp
             }
           }
         });
@@ -111,6 +114,7 @@ export const authRepo = {
           email,
           full_name,
           phone,
+          whatsapp: finalWhatsApp,
           role: "user",
           approved: false
         };
@@ -132,6 +136,7 @@ export const authRepo = {
       email,
       full_name,
       phone,
+      whatsapp: finalWhatsApp,
       role: "user",
       approved: false, // Starts as pending approval per Migration 0003!
       created_at: new Date().toISOString()
@@ -161,7 +166,7 @@ export const authRepo = {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, full_name, email, phone, role, approved, created_at")
+          .select("id, full_name, email, phone, whatsapp, role, approved, created_at")
           .order("created_at", { ascending: false });
         if (error) throw error;
         return { data, error: null };

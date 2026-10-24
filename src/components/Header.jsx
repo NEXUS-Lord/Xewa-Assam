@@ -6,6 +6,7 @@ export default function Header({
   selectedCity,
   onSelectCity,
   currentUser,
+  pendingCount = 0,
   onOpenSuggest,
   onOpenAuth,
   onOpenProfile,
@@ -95,9 +96,22 @@ export default function Header({
 
         {/* Admin Portal Shortcut if Admin */}
         {currentUser?.role === "admin" && (
-          <button className="admin-badge-btn" onClick={onOpenAdmin}>
+          <button className="admin-badge-btn" onClick={onOpenAdmin} style={{ position: "relative" }}>
             <Shield size={14} />
             <span>Admin Portal</span>
+            {pendingCount > 0 && (
+              <span style={{
+                background: "#ef4444",
+                color: "#ffffff",
+                borderRadius: "999px",
+                padding: "1px 6px",
+                fontSize: "10px",
+                fontWeight: "800",
+                marginLeft: "2px"
+              }}>
+                {pendingCount}
+              </span>
+            )}
           </button>
         )}
 

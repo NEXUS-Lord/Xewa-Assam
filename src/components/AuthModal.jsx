@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { X, User, Lock, Mail, Phone, ShieldCheck, AlertCircle } from "lucide-react";
+import { X, User, Lock, Mail, Phone, MessageSquare, ShieldCheck, AlertCircle } from "lucide-react";
 import { authRepo } from "../data/authRepo";
 import { isValidIndianPhone, cleanPhone } from "../core/constants";
+import { triggerAdminWhatsAppNotification } from "../core/whatsappAlert";
 
 export default function AuthModal({
   onClose,
@@ -13,6 +14,8 @@ export default function AuthModal({
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [sameAsPhone, setSameAsPhone] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -40,7 +43,12 @@ export default function AuthModal({
       return;
     }
     if (!isValidIndianPhone(phone)) {
-      setErrorMsg("Please enter a valid 10-digit mobile number (starting with 6, 7, 8, or 9).");
+      setErrorMsg("Please enter a valid 10-digit calling mobile number (starting with 6, 7, 8, or 9).");
+      return;
+    }
+    const finalWhatsApp = sameAsPhone ? cleanPhone(phone) : cleanPhone(whatsapp);
+    if (!sameAsPhone && !isValidIndianPhone(whatsapp)) {
+      setErrorMsg("Please enter a valid 10-digit WhatsApp number (starting with 6, 7, 8, or 9).");
       return;
     }
 
@@ -51,13 +59,22 @@ export default function AuthModal({
       email: email.trim(),
       password,
       full_name: fullName.trim(),
-      phone: cleanPhone(phone)
+      phone: cleanPhone(phone),
+      whatsapp: finalWhatsApp
     });
     setLoading(false);
 
     if (error) {
       setErrorMsg(error);
     } else {
+      // Trigger background alert to Admin
+      triggerAdminWhatsAppNotification({
+        full_name: fullName.trim(),
+        email: email.trim(),
+        phone: cleanPhone(phone),
+        whatsapp: finalWhatsApp
+      });
+
       onShowToast?.("Account created! Waiting for admin approval.", "success");
       onLoginSuccess(data);
       onClose();
@@ -166,7 +183,7 @@ export default function AuthModal({
               </div>
 
               <div className="form-group">
-                <label className="form-label">Mobile Number <span className="required-star">*</span></label>
+                <label className="form-label">Calling Phone Number <span className="required-star">*</span></label>
                 <div style={{ position: "relative" }}>
                   <input
                     type="tel"
@@ -180,7 +197,42 @@ export default function AuthModal({
                   />
                   <Phone size={16} color="#94a3b8" style={{ position: "absolute", left: "12px", top: "13px" }} />
                 </div>
-                <span className="form-hint">Used for verification and community safety</span>
+                <span className="form-hint">Used for primary direct calls</span>
+              </div>
+
+              {/* WhatsApp Option */}
+              <div className="form-group" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "12px", borderRadius: "10px" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "600", color: "#166534" }}>
+                  <input
+                    type="checkbox"
+                    checked={sameAsPhone}
+                    onChange={(e) => setSameAsPhone(e.target.checked)}
+                    style={{ accentColor: "#16a34a", width: "16px", height: "16px", cursor: "pointer" }}
+                  />
+                  <span>WhatsApp number is the same as calling number</span>
+                </label>
+
+                {!sameAsPhone && (
+                  <div style={{ marginTop: "10px" }}>
+                    <label className="form-label" style={{ color: "#166534" }}>
+                      WhatsApp Number <span className="required-star">*</span>
+                    </label>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        type="tel"
+                        className="form-input"
+                        style={{ paddingLeft: "36px", borderColor: "#86efac", background: "#ffffff" }}
+                        placeholder="10-digit WhatsApp number"
+                        value={whatsapp}
+                        onChange={(e) => setWhatsapp(e.target.value)}
+                        maxLength={10}
+                        required={!sameAsPhone}
+                      />
+                      <MessageSquare size={16} color="#16a34a" style={{ position: "absolute", left: "12px", top: "13px" }} />
+                    </div>
+                    <span className="form-hint" style={{ color: "#15803d" }}>Used for instant WhatsApp notifications and approval alerts</span>
+                  </div>
+                )}
               </div>
 
               <div className="form-group">

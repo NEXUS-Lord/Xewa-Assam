@@ -698,12 +698,44 @@ export default function AdminDashboard({
                     value={waConfig.provider}
                     onChange={(e) => setWaConfig({ ...waConfig, provider: e.target.value })}
                   >
+                    <option value="callmebot">CallMeBot (100% Free Forever — Instant 30s WhatsApp Alerts)</option>
                     <option value="meta">Meta WhatsApp Cloud API (Official — 1,000 Free Messages/Month)</option>
-                    <option value="ultramsg">UltraMsg (Recommended — Easy QR Scan / No Business Verification Needed)</option>
+                    <option value="ultramsg">UltraMsg (QR Scan Gateway)</option>
                     <option value="twilio">Twilio WhatsApp API (Enterprise Cloud Gateway)</option>
-                    <option value="webhook">Custom Webhook / CallMeBot / Zapier</option>
+                    <option value="webhook">Custom Webhook / Zapier</option>
                   </select>
                 </div>
+
+                {/* CallMeBot Fields (100% Free Forever) */}
+                {waConfig.provider === "callmebot" && (
+                  <div style={{ background: "#ffffff", border: "1.5px solid #86efac", padding: "18px", borderRadius: "14px", marginBottom: "16px" }}>
+                    <div style={{ fontSize: "14px", fontWeight: "800", color: "#166534", marginBottom: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span>⚡ 30-Second Free Setup for CallMeBot:</span>
+                    </div>
+
+                    <div style={{ fontSize: "12px", color: "#334155", lineHeight: "1.6", background: "#f0fdf4", padding: "12px", borderRadius: "10px", marginBottom: "14px", border: "1px solid #bbf7d0" }}>
+                      <strong>Step 1:</strong> Save this phone number in your contacts: <strong>+34 644 44 49 64</strong> (CallMeBot Gateway)<br />
+                      <strong>Step 2:</strong> Open WhatsApp and send this message to that number:<br />
+                      <code style={{ background: "#dcfce7", padding: "2px 6px", borderRadius: "4px", color: "#166534", fontWeight: "700" }}>I allow callmebot to send me messages</code><br />
+                      <strong>Step 3:</strong> CallMeBot will reply within 10 seconds with your <strong>APIKEY</strong>. Paste it below!
+                    </div>
+
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label" style={{ color: "#166534" }}>
+                        CallMeBot API Key <span className="required-star">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="e.g. 123456"
+                        value={waConfig.callmebotApiKey || ""}
+                        onChange={(e) => setWaConfig({ ...waConfig, callmebotApiKey: e.target.value })}
+                        required={waConfig.provider === "callmebot"}
+                      />
+                      <span className="form-hint" style={{ color: "#15803d" }}>Your personal API key received from CallMeBot on WhatsApp</span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Meta WhatsApp Cloud API Fields */}
                 {waConfig.provider === "meta" && (

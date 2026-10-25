@@ -3,12 +3,15 @@ import { cleanPhone, formatWhatsAppUrl } from "./constants";
 const STORAGE_KEY = "xewa_whatsapp_gateway_config";
 
 export const DEFAULT_CONFIG = {
-  provider: "ultramsg", // 'ultramsg' | 'meta' | 'twilio' | 'webhook'
+  provider: "callmebot", // 'callmebot' | 'ultramsg' | 'meta' | 'twilio' | 'webhook'
   enabled: true,
   autoNotifyOnApproval: true,
   autoAlertOnSignup: true,
   autoAlertOnListing: true,
   adminPhone: import.meta.env.VITE_ADMIN_WHATSAPP || "",
+
+  // CallMeBot configuration (100% Free Forever)
+  callmebotApiKey: import.meta.env.VITE_CALLMEBOT_API_KEY || "",
 
   // Meta WhatsApp Cloud API (1,000 Free conversations/month)
   metaPhoneNumberId: import.meta.env.VITE_META_PHONE_NUMBER_ID || "",
@@ -23,7 +26,7 @@ export const DEFAULT_CONFIG = {
   twilioAuthToken: import.meta.env.VITE_TWILIO_AUTH_TOKEN || "",
   twilioFrom: import.meta.env.VITE_TWILIO_FROM || "",
 
-  // Webhook / CallMeBot configuration
+  // Webhook configuration
   webhookUrl: import.meta.env.VITE_WHATSAPP_WEBHOOK_URL || ""
 };
 
@@ -61,7 +64,19 @@ export async function sendAutomatedWhatsApp({ to, message }) {
   // Format with India 91 prefix if 10 digits
   const fullTo = cleanTo.length === 10 ? `91${cleanTo}` : cleanTo;
 
-  // 1. Meta WhatsApp Cloud API (1,000 Free conversations/month)
+  // 1. CallMeBot (100% Free Forever for personal WhatsApp alerts)
+  if (config.provider === "callmebot" && config.callmebotApiKey) {
+    try {
+      const encodedMsg = encodeURIComponent(message);
+      const url = `https://api.callmebot.com/whatsapp.php?phone=${fullTo}&text=${encodedMsg}&apikey=${config.callmebotApiKey.trim()}`;
+      await fetch(url, { method: "GET", mode: "no-cors" });
+      return { success: true, provider: "callmebot" };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  }
+
+  // 2. Meta WhatsApp Cloud API (1,000 Free conversations/month)
   if (config.provider === "meta" && config.metaPhoneNumberId && config.metaAccessToken) {
     try {
       const url = `https://graph.facebook.com/v19.0/${config.metaPhoneNumberId.trim()}/messages`;

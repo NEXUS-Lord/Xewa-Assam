@@ -290,9 +290,6 @@ export default function AdminDashboard({
                   />
                 </div>
               </div>
-              <span style={{ fontSize: "10px", color: "#64748b", marginTop: "4px", display: "block" }}>
-                ⚡ Free setup at <a href="https://www.emailjs.com" target="_blank" rel="noreferrer" style={{ color: "#16a34a", textDecoration: "underline", fontWeight: "700" }}>emailjs.com</a>: Connects your Gmail to automatically email users when you accept/reject their account or listings!
-              </span>
             </div>
 
             <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>

@@ -6,7 +6,7 @@ export const DEFAULT_EMAIL_CONFIG = {
 
   // EmailJS credentials (Free 200 emails/month forever — sends to ANY user's email)
   emailjsServiceId: import.meta.env.VITE_EMAILJS_SERVICE_ID || "service_52abcjs",
-  emailjsTemplateId: import.meta.env.VITE_EMAILJS_TEMPLATE_ID || "vu8ubbs",
+  emailjsTemplateId: import.meta.env.VITE_EMAILJS_TEMPLATE_ID || "template_d6ijl3a",
   emailjsPublicKey: import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "praneds1I8Lqt2QvL",
 
   // Web3Forms access key (Free unlimited form-to-inbox alerts for admin)

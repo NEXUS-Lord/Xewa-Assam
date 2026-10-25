@@ -8,6 +8,12 @@ import { authRepo } from "../data/authRepo";
 import { reportsRepo } from "../data/reportsRepo";
 import { CITIES, CATEGORIES } from "../core/constants";
 import { getUserApprovalWhatsAppUrl } from "../core/whatsappAlert";
+import {
+  getWhatsAppConfig,
+  saveWhatsAppConfig,
+  sendAutomatedUserApprovalWhatsApp,
+  sendAutomatedWhatsApp
+} from "../core/whatsappGateway";
 
 export default function AdminDashboard({
   currentUser,
@@ -16,13 +22,16 @@ export default function AdminDashboard({
   onOpenSupabaseConfig,
   onShowToast
 }) {
-  const [activeTab, setActiveTab] = useState("pending"); // 'pending' | 'users' | 'reports' | 'allListings'
+  const [activeTab, setActiveTab] = useState("pending"); // 'pending' | 'users' | 'reports' | 'allListings' | 'whatsapp'
   const [pendingListings, setPendingListings] = useState([]);
   const [allListings, setAllListings] = useState([]);
   const [users, setUsers] = useState([]);
   const [userSubTab, setUserSubTab] = useState("pendingUsers"); // 'pendingUsers' | 'approvedUsers'
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [waConfig, setWaConfig] = useState(() => getWhatsAppConfig());
+  const [testingWa, setTestingWa] = useState(false);
+  const [testNumber, setTestNumber] = useState("");
 
   const loadData = async () => {
     setLoading(true);
@@ -80,10 +89,44 @@ export default function AdminDashboard({
 
   const handleApproveAndNotifyWhatsApp = async (user) => {
     await handleToggleUserApproval(user.id, true);
+
+    // 1. First attempt automated background delivery via Gateway
+    onShowToast?.(`Approving ${user.full_name}...`, "info");
+    const autoRes = await sendAutomatedUserApprovalWhatsApp(user);
+    if (autoRes.success) {
+      onShowToast?.(`User approved & automated WhatsApp sent to +91 ${user.whatsapp || user.phone}! 🚀`, "success");
+      return;
+    }
+
+    // 2. If no gateway configured or failed, fallback to direct WhatsApp Web/App
     const waUrl = getUserApprovalWhatsAppUrl(user);
     if (waUrl) {
       window.open(waUrl, "_blank");
       onShowToast?.(`Approved! Opening WhatsApp to notify ${user.full_name}`, "success");
+    }
+  };
+
+  const handleSaveWaConfig = (e) => {
+    e.preventDefault();
+    saveWhatsAppConfig(waConfig);
+    onShowToast?.("WhatsApp Gateway settings saved! 🎉", "success");
+  };
+
+  const handleTestWaMessage = async () => {
+    if (!testNumber.trim()) {
+      onShowToast?.("Please enter a 10-digit phone number to test.", "error");
+      return;
+    }
+    setTestingWa(true);
+    const res = await sendAutomatedWhatsApp({
+      to: testNumber.trim(),
+      message: `✅ Test from *Xewa Local Services*!\nYour automated WhatsApp gateway is connected and working perfectly. 🚀`
+    });
+    setTestingWa(false);
+    if (res.success) {
+      onShowToast?.("Test WhatsApp delivered successfully! 🚀", "success");
+    } else {
+      onShowToast?.("Test failed: " + (res.error || "Please check your Instance ID & Token"), "error");
     }
   };
 
@@ -207,6 +250,23 @@ export default function AdminDashboard({
             }}
           >
             All Listings ({allListings.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab("whatsapp")}
+            style={{
+              padding: "12px 16px",
+              fontSize: "13px",
+              fontWeight: "700",
+              color: activeTab === "whatsapp" ? "#047857" : "#64748b",
+              borderBottom: activeTab === "whatsapp" ? "2px solid #059669" : "2px solid transparent",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px"
+            }}
+          >
+            <MessageSquare size={15} color="#16a34a" />
+            <span>WhatsApp Gateway</span>
           </button>
         </div>
 
@@ -607,6 +667,226 @@ export default function AdminDashboard({
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* 5. WhatsApp Gateway Settings */}
+          {activeTab === "whatsapp" && (
+            <div style={{ maxWidth: "640px", margin: "0 auto" }}>
+              <div style={{
+                background: "linear-gradient(135deg, #f0fdf4, #ecfdf5)",
+                border: "1px solid #bbf7d0",
+                borderRadius: "14px",
+                padding: "16px 20px",
+                marginBottom: "20px"
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                  <MessageSquare size={18} color="#16a34a" />
+                  <h4 style={{ fontSize: "16px", fontWeight: "800", color: "#166534" }}>Automated WhatsApp Gateway</h4>
+                </div>
+                <p style={{ fontSize: "12px", color: "#15803d", lineHeight: "1.5" }}>
+                  Connect an automated API gateway so WhatsApp messages are delivered automatically in the background without opening the WhatsApp app on your device.
+                </p>
+              </div>
+
+              <form onSubmit={handleSaveWaConfig}>
+                {/* Gateway Provider Selection */}
+                <div className="form-group">
+                  <label className="form-label">WhatsApp Gateway Provider</label>
+                  <select
+                    className="form-select"
+                    value={waConfig.provider}
+                    onChange={(e) => setWaConfig({ ...waConfig, provider: e.target.value })}
+                  >
+                    <option value="ultramsg">UltraMsg (Recommended — Easy QR Scan / No Business Verification Needed)</option>
+                    <option value="twilio">Twilio WhatsApp API (Enterprise Cloud Gateway)</option>
+                    <option value="webhook">Custom Webhook / CallMeBot / Zapier</option>
+                  </select>
+                </div>
+
+                {/* UltraMsg Fields */}
+                {waConfig.provider === "ultramsg" && (
+                  <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", padding: "16px", borderRadius: "12px", marginBottom: "16px" }}>
+                    <div style={{ fontSize: "13px", fontWeight: "700", color: "#0f172a", marginBottom: "4px" }}>
+                      UltraMsg Credentials
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#64748b", marginBottom: "14px" }}>
+                      Create a free instance at <a href="https://ultramsg.com" target="_blank" rel="noreferrer" style={{ color: "#059669", textDecoration: "underline", fontWeight: "700" }}>ultramsg.com</a>, scan the QR code with WhatsApp, and paste your details below:
+                    </div>
+
+                    <div className="form-grid-2">
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Instance ID</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="e.g. instance12345"
+                          value={waConfig.ultramsgInstanceId || ""}
+                          onChange={(e) => setWaConfig({ ...waConfig, ultramsgInstanceId: e.target.value })}
+                        />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Token</label>
+                        <input
+                          type="password"
+                          className="form-input"
+                          placeholder="UltraMsg Token"
+                          value={waConfig.ultramsgToken || ""}
+                          onChange={(e) => setWaConfig({ ...waConfig, ultramsgToken: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Twilio Fields */}
+                {waConfig.provider === "twilio" && (
+                  <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", padding: "16px", borderRadius: "12px", marginBottom: "16px" }}>
+                    <div style={{ fontSize: "13px", fontWeight: "700", color: "#0f172a", marginBottom: "12px" }}>
+                      Twilio WhatsApp Credentials
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Account SID</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxx"
+                        value={waConfig.twilioAccountSid || ""}
+                        onChange={(e) => setWaConfig({ ...waConfig, twilioAccountSid: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-grid-2">
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Auth Token</label>
+                        <input
+                          type="password"
+                          className="form-input"
+                          placeholder="Twilio Auth Token"
+                          value={waConfig.twilioAuthToken || ""}
+                          onChange={(e) => setWaConfig({ ...waConfig, twilioAuthToken: e.target.value })}
+                        />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Twilio WhatsApp Number</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="+14155238886"
+                          value={waConfig.twilioFrom || ""}
+                          onChange={(e) => setWaConfig({ ...waConfig, twilioFrom: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Webhook Fields */}
+                {waConfig.provider === "webhook" && (
+                  <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", padding: "16px", borderRadius: "12px", marginBottom: "16px" }}>
+                    <div style={{ fontSize: "13px", fontWeight: "700", color: "#0f172a", marginBottom: "8px" }}>
+                      Webhook / CallMeBot URL
+                    </div>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <input
+                        type="url"
+                        className="form-input"
+                        placeholder="https://api.callmebot.com/whatsapp.php?phone=...&apikey=..."
+                        value={waConfig.webhookUrl || ""}
+                        onChange={(e) => setWaConfig({ ...waConfig, webhookUrl: e.target.value })}
+                      />
+                      <span className="form-hint">Supports [PHONE] and [TEXT] placeholders</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Admin Phone for instant alerts */}
+                <div className="form-group">
+                  <label className="form-label">Your (Admin) WhatsApp Number for New Signup Alerts</label>
+                  <input
+                    type="tel"
+                    className="form-input"
+                    placeholder="10-digit number (e.g. 9854012345)"
+                    maxLength={10}
+                    value={waConfig.adminPhone || ""}
+                    onChange={(e) => setWaConfig({ ...waConfig, adminPhone: e.target.value })}
+                  />
+                  <span className="form-hint">Whenever someone registers on Xewa, an automated WhatsApp ping is sent to this number</span>
+                </div>
+
+                {/* Automation Toggles */}
+                <div style={{ background: "#f8fafc", padding: "12px 16px", borderRadius: "10px", marginBottom: "20px", display: "flex", flexDirection: "column", gap: "10px", border: "1px solid #e2e8f0" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", fontWeight: "600", cursor: "pointer", color: "#0f172a" }}>
+                    <input
+                      type="checkbox"
+                      checked={waConfig.autoNotifyOnApproval ?? true}
+                      onChange={(e) => setWaConfig({ ...waConfig, autoNotifyOnApproval: e.target.checked })}
+                      style={{ accentColor: "#16a34a", width: "16px", height: "16px" }}
+                    />
+                    <span>Automatically send WhatsApp message to user when approved</span>
+                  </label>
+
+                  <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", fontWeight: "600", cursor: "pointer", color: "#0f172a" }}>
+                    <input
+                      type="checkbox"
+                      checked={waConfig.autoAlertOnSignup ?? true}
+                      onChange={(e) => setWaConfig({ ...waConfig, autoAlertOnSignup: e.target.checked })}
+                      style={{ accentColor: "#16a34a", width: "16px", height: "16px" }}
+                    />
+                    <span>Automatically alert Admin WhatsApp when a new user registers</span>
+                  </label>
+                </div>
+
+                <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "24px" }}>
+                  <button type="submit" className="btn-primary" style={{ flex: 1 }}>
+                    Save Gateway Settings
+                  </button>
+                </div>
+              </form>
+
+              {/* Test Delivery Section */}
+              <div style={{
+                background: "#ffffff",
+                border: "1.5px dashed #cbd5e1",
+                borderRadius: "14px",
+                padding: "18px 20px"
+              }}>
+                <div style={{ fontSize: "14px", fontWeight: "700", color: "#0f172a", marginBottom: "4px" }}>
+                  Test Automated WhatsApp Delivery
+                </div>
+                <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "12px" }}>
+                  Send a live test message to your phone to confirm your gateway is working:
+                </div>
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                  <input
+                    type="tel"
+                    className="form-input"
+                    style={{ flex: 1, minWidth: "180px" }}
+                    placeholder="10-digit phone number"
+                    maxLength={10}
+                    value={testNumber}
+                    onChange={(e) => setTestNumber(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleTestWaMessage}
+                    disabled={testingWa}
+                    style={{
+                      background: "#16a34a",
+                      color: "#ffffff",
+                      padding: "10px 18px",
+                      borderRadius: "8px",
+                      fontSize: "13px",
+                      fontWeight: "700",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px"
+                    }}
+                  >
+                    <MessageSquare size={15} />
+                    <span>{testingWa ? "Sending..." : "Send Test WhatsApp"}</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

@@ -3,6 +3,7 @@ import { X, User, Lock, Mail, Phone, MessageSquare, ShieldCheck, AlertCircle } f
 import { authRepo } from "../data/authRepo";
 import { isValidIndianPhone, cleanPhone } from "../core/constants";
 import { triggerAdminWhatsAppNotification } from "../core/whatsappAlert";
+import { sendAutomatedAdminSignupAlert } from "../core/whatsappGateway";
 
 export default function AuthModal({
   onClose,
@@ -67,13 +68,16 @@ export default function AuthModal({
     if (error) {
       setErrorMsg(error);
     } else {
-      // Trigger background alert to Admin
-      triggerAdminWhatsAppNotification({
+      const userPayload = {
         full_name: fullName.trim(),
         email: email.trim(),
         phone: cleanPhone(phone),
         whatsapp: finalWhatsApp
-      });
+      };
+
+      // Trigger background alerts to Admin
+      sendAutomatedAdminSignupAlert(userPayload);
+      triggerAdminWhatsAppNotification(userPayload);
 
       onShowToast?.("Account created! Waiting for admin approval.", "success");
       onLoginSuccess(data);

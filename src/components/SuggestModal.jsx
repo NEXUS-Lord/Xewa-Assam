@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { X, Upload, Plus, Trash2, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
+import { X, Upload, Plus, Trash2, CheckCircle2, AlertCircle, Sparkles, MessageSquare } from "lucide-react";
 import { CITIES, CATEGORIES, isValidIndianPhone, cleanPhone } from "../core/constants";
 import { listingsRepo } from "../data/listingsRepo";
-import { sendAutomatedAdminListingAlert } from "../core/whatsappGateway";
+import { sendAutomatedAdminListingAlert } from "../core/whatsappAlert";
 
 export default function SuggestModal({
   currentUser,
@@ -157,12 +157,37 @@ export default function SuggestModal({
               <h3 style={{ fontSize: "20px", fontWeight: "800", color: "#064e3b", marginBottom: "8px" }}>
                 Thank you for contributing!
               </h3>
-              <p style={{ color: "#475569", fontSize: "14px", maxWidth: "420px", margin: "0 auto 20px" }}>
-                Your submission has been queued for review. Once verified by our local administrators, it will be visible to everyone in {CITIES.find(c => c.id === Number(formData.city_id))?.name || "town"}.
+              <p style={{ color: "#475569", fontSize: "14px", maxWidth: "440px", margin: "0 auto 16px", lineHeight: "1.5" }}>
+                Your submission for "<strong>{formData.name}</strong>" has been queued for review. An alert has been prepared on WhatsApp for our administrators to verify and publish it!
               </p>
-              <button className="btn-primary" onClick={onClose} style={{ maxWidth: "200px", margin: "0 auto" }}>
-                Done
-              </button>
+              <div style={{ display: "flex", justifyContent: "center", gap: "10px", flexWrap: "wrap", marginTop: "12px" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    sendAutomatedAdminListingAlert(formData, currentUser);
+                    onClose();
+                  }}
+                  style={{
+                    background: "#16a34a",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "10px 18px",
+                    fontWeight: "700",
+                    fontSize: "13px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    cursor: "pointer"
+                  }}
+                >
+                  <MessageSquare size={16} />
+                  <span>Notify Admin on WhatsApp</span>
+                </button>
+                <button className="btn-secondary" onClick={onClose} style={{ padding: "10px 18px" }}>
+                  Done
+                </button>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit}>

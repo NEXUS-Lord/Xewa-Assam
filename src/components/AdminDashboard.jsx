@@ -7,13 +7,11 @@ import { listingsRepo } from "../data/listingsRepo";
 import { authRepo } from "../data/authRepo";
 import { reportsRepo } from "../data/reportsRepo";
 import { CITIES, CATEGORIES } from "../core/constants";
-import { getUserApprovalWhatsAppUrl } from "../core/whatsappAlert";
 import {
-  getWhatsAppConfig,
-  saveWhatsAppConfig,
-  sendAutomatedUserApprovalWhatsApp,
-  sendAutomatedWhatsApp
-} from "../core/whatsappGateway";
+  getUserApprovalWhatsAppUrl,
+  getAdminWhatsApp,
+  saveAdminWhatsApp
+} from "../core/whatsappAlert";
 
 export default function AdminDashboard({
   currentUser,
@@ -22,16 +20,15 @@ export default function AdminDashboard({
   onOpenSupabaseConfig,
   onShowToast
 }) {
-  const [activeTab, setActiveTab] = useState("pending"); // 'pending' | 'users' | 'reports' | 'allListings' | 'whatsapp'
+  const [activeTab, setActiveTab] = useState("pending"); // 'pending' | 'users' | 'reports' | 'allListings'
   const [pendingListings, setPendingListings] = useState([]);
   const [allListings, setAllListings] = useState([]);
   const [users, setUsers] = useState([]);
   const [userSubTab, setUserSubTab] = useState("pendingUsers"); // 'pendingUsers' | 'approvedUsers'
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [waConfig, setWaConfig] = useState(() => getWhatsAppConfig());
-  const [testingWa, setTestingWa] = useState(false);
-  const [testNumber, setTestNumber] = useState("");
+  const [adminPhone, setAdminPhone] = useState(() => getAdminWhatsApp());
+  const [adminPhoneInput, setAdminPhoneInput] = useState(() => getAdminWhatsApp());
 
   const loadData = async () => {
     setLoading(true);
@@ -89,51 +86,24 @@ export default function AdminDashboard({
 
   const handleApproveAndNotifyWhatsApp = async (user) => {
     await handleToggleUserApproval(user.id, true);
-
-    // 1. First attempt automated background delivery via Gateway
-    onShowToast?.(`Approving ${user.full_name}...`, "info");
-    const autoRes = await sendAutomatedUserApprovalWhatsApp(user);
-    if (autoRes.success) {
-      onShowToast?.(`User approved & automated WhatsApp sent to +91 ${user.whatsapp || user.phone}! 🚀`, "success");
-      return;
-    }
-
-    // 2. If no gateway configured or failed, fallback to direct WhatsApp Web/App
     const waUrl = getUserApprovalWhatsAppUrl(user);
     if (waUrl) {
       window.open(waUrl, "_blank");
-      onShowToast?.(`Approved! Opening WhatsApp to notify ${user.full_name}`, "success");
+      onShowToast?.(`User approved! Opening WhatsApp notification for ${user.full_name} 💬`, "success");
+    } else {
+      onShowToast?.(`User approved: ${user.full_name} ✅`, "success");
     }
   };
 
-  const handleSaveWaConfig = (e) => {
-    e.preventDefault();
-    saveWhatsAppConfig(waConfig);
-    onShowToast?.("WhatsApp Gateway settings saved! 🎉", "success");
-  };
-
-  const handleTestWaMessage = async () => {
-    if (!testNumber.trim()) {
-      onShowToast?.("Please enter a 10-digit phone number to test.", "error");
+  const handleSaveAdminPhone = () => {
+    const cleaned = adminPhoneInput.replace(/\D/g, "").slice(-10);
+    if (cleaned.length < 10) {
+      onShowToast?.("Please enter a valid 10-digit mobile number.", "error");
       return;
     }
-    setTestingWa(true);
-    const testMsg = `✅ Test from *Xewa Local Services*!\nYour WhatsApp notification gateway is connected and working. 🚀`;
-    const res = await sendAutomatedWhatsApp({
-      to: testNumber.trim(),
-      message: testMsg
-    });
-    setTestingWa(false);
-    if (res.success) {
-      onShowToast?.("Test WhatsApp delivered successfully! 🚀", "success");
-    } else if (res.fallbackToDirect || waConfig.provider === "direct") {
-      const cleanNum = testNumber.replace(/\D/g, "");
-      const full = cleanNum.length === 10 ? `91${cleanNum}` : cleanNum;
-      window.open(`https://wa.me/${full}?text=${encodeURIComponent(testMsg)}`, "_blank");
-      onShowToast?.(res.error || "Opening direct WhatsApp test message! 💬", "info");
-    } else {
-      onShowToast?.("Test failed: " + (res.error || "Please check your gateway credentials"), "error");
-    }
+    saveAdminWhatsApp(cleaned);
+    setAdminPhone(cleaned);
+    onShowToast?.(`Admin WhatsApp updated to +91 ${cleaned}! ✅`, "success");
   };
 
   const handleResolveReport = async (reportId) => {
@@ -258,22 +228,6 @@ export default function AdminDashboard({
             All Listings ({allListings.length})
           </button>
 
-          <button
-            onClick={() => setActiveTab("whatsapp")}
-            style={{
-              padding: "12px 16px",
-              fontSize: "13px",
-              fontWeight: "700",
-              color: activeTab === "whatsapp" ? "#047857" : "#64748b",
-              borderBottom: activeTab === "whatsapp" ? "2px solid #059669" : "2px solid transparent",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px"
-            }}
-          >
-            <MessageSquare size={15} color="#16a34a" />
-            <span>WhatsApp Gateway</span>
-          </button>
         </div>
 
         {/* Tab Contents */}
@@ -373,6 +327,58 @@ export default function AdminDashboard({
           {/* 2. User Accounts & Approvals */}
           {activeTab === "users" && (
             <div>
+              {/* Native Admin WhatsApp Alert Setting */}
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                background: "#f0fdf4",
+                border: "1px solid #bbf7d0",
+                padding: "10px 14px",
+                borderRadius: "12px",
+                marginBottom: "16px",
+                flexWrap: "wrap",
+                gap: "10px"
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "#166534" }}>
+                  <MessageSquare size={16} />
+                  <span>Your Admin WhatsApp: <strong>+91 {adminPhone || "9854011223"}</strong></span>
+                  <span style={{ fontSize: "11px", color: "#64748b" }}>(Receives alerts for registrations & listings)</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <input
+                    type="tel"
+                    placeholder="10-digit number"
+                    maxLength={10}
+                    value={adminPhoneInput}
+                    onChange={(e) => setAdminPhoneInput(e.target.value)}
+                    style={{
+                      padding: "5px 10px",
+                      fontSize: "12px",
+                      border: "1px solid #86efac",
+                      borderRadius: "6px",
+                      width: "125px",
+                      background: "#ffffff"
+                    }}
+                  />
+                  <button
+                    onClick={handleSaveAdminPhone}
+                    style={{
+                      background: "#16a34a",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "6px",
+                      padding: "5px 12px",
+                      fontSize: "12px",
+                      fontWeight: "700",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+
               <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
                 <button
                   onClick={() => setUserSubTab("pendingUsers")}
@@ -673,376 +679,6 @@ export default function AdminDashboard({
                   </div>
                 </div>
               ))}
-            </div>
-          )}
-
-          {/* 5. WhatsApp Gateway Settings */}
-          {activeTab === "whatsapp" && (
-            <div style={{ maxWidth: "640px", margin: "0 auto" }}>
-              <div style={{
-                background: "linear-gradient(135deg, #f0fdf4, #ecfdf5)",
-                border: "1px solid #bbf7d0",
-                borderRadius: "14px",
-                padding: "16px 20px",
-                marginBottom: "20px"
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                  <MessageSquare size={18} color="#16a34a" />
-                  <h4 style={{ fontSize: "16px", fontWeight: "800", color: "#166534" }}>Automated WhatsApp Gateway</h4>
-                </div>
-                <p style={{ fontSize: "12px", color: "#15803d", lineHeight: "1.5" }}>
-                  Connect an automated API gateway so WhatsApp messages are delivered automatically in the background without opening the WhatsApp app on your device.
-                </p>
-              </div>
-
-              <form onSubmit={handleSaveWaConfig}>
-                {/* Gateway Provider Selection */}
-                <div className="form-group">
-                  <label className="form-label">WhatsApp Gateway Provider</label>
-                  <select
-                    className="form-select"
-                    value={waConfig.provider || "direct"}
-                    onChange={(e) => setWaConfig({ ...waConfig, provider: e.target.value })}
-                  >
-                    <option value="direct">Direct 1-Click WhatsApp (100% Reliable & Free — No Bot Needed)</option>
-                    <option value="callmebot">CallMeBot (Free Admin Alerts via WhatsApp)</option>
-                    <option value="ultramsg">UltraMsg (Full Gateway via QR Scan)</option>
-                    <option value="meta">Meta WhatsApp Cloud API (Official Cloud — 1,000 Free Messages/Month)</option>
-                    <option value="twilio">Twilio WhatsApp API (Enterprise Cloud Gateway)</option>
-                    <option value="webhook">Custom Webhook / Zapier</option>
-                  </select>
-                </div>
-
-                {/* Direct 1-Click Mode Banner */}
-                {(!waConfig.provider || waConfig.provider === "direct") && (
-                  <div style={{ background: "#f0fdf4", border: "1.5px solid #86efac", padding: "16px 18px", borderRadius: "14px", marginBottom: "16px" }}>
-                    <div style={{ fontSize: "14px", fontWeight: "800", color: "#166534", marginBottom: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
-                      <span>✅ Zero-Setup 1-Click WhatsApp Mode Active</span>
-                    </div>
-                    <div style={{ fontSize: "12px", color: "#334155", lineHeight: "1.6" }}>
-                      No external bots or third-party API keys required! Whenever you approve a user, submit a listing, or click WhatsApp on any provider card, Xewa automatically generates the official WhatsApp Web/App link with the pre-filled message. 100% reliable for your college presentation!
-                    </div>
-                  </div>
-                )}
-
-                {/* CallMeBot Fields (100% Free Forever) */}
-                {waConfig.provider === "callmebot" && (
-                  <div style={{ background: "#ffffff", border: "1.5px solid #86efac", padding: "18px", borderRadius: "14px", marginBottom: "16px" }}>
-                    <div style={{ fontSize: "14px", fontWeight: "800", color: "#166534", marginBottom: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
-                      <span>⚡ CallMeBot WhatsApp Setup:</span>
-                    </div>
-
-                    <div style={{ fontSize: "12px", color: "#334155", lineHeight: "1.6", background: "#f0fdf4", padding: "14px", borderRadius: "10px", marginBottom: "14px", border: "1px solid #bbf7d0" }}>
-                      <div style={{ fontWeight: "700", marginBottom: "6px", color: "#166534" }}>
-                        CallMeBot uses rotating bot numbers to prevent Meta spam filters. Click below to message the active bots:
-                      </div>
-                      
-                      <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "10px", marginBottom: "10px" }}>
-                        <a
-                          href="https://wa.me/34623786449?text=I%20allow%20callmebot%20to%20send%20me%20messages"
-                          target="_blank"
-                          rel="noreferrer"
-                          style={{
-                            background: "#16a34a",
-                            color: "#ffffff",
-                            padding: "8px 12px",
-                            borderRadius: "8px",
-                            textDecoration: "none",
-                            fontWeight: "700",
-                            fontSize: "12px",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            width: "fit-content"
-                          }}
-                        >
-                          <MessageSquare size={14} />
-                          <span>👉 Step 1: Click here to message Primary Bot (+34 623 78 64 49)</span>
-                        </a>
-
-                        <a
-                          href="https://wa.me/34644992698?text=I%20allow%20callmebot%20to%20send%20me%20messages"
-                          target="_blank"
-                          rel="noreferrer"
-                          style={{
-                            background: "#0d9488",
-                            color: "#ffffff",
-                            padding: "8px 12px",
-                            borderRadius: "8px",
-                            textDecoration: "none",
-                            fontWeight: "700",
-                            fontSize: "12px",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            width: "fit-content"
-                          }}
-                        >
-                          <MessageSquare size={14} />
-                          <span>👉 If Bot #1 doesn't reply in 30s, try Bot #2 (+34 644 99 26 98)</span>
-                        </a>
-
-                        <a
-                          href="https://wa.me/34644444964?text=I%20allow%20callmebot%20to%20send%20me%20messages"
-                          target="_blank"
-                          rel="noreferrer"
-                          style={{
-                            background: "#475569",
-                            color: "#ffffff",
-                            padding: "8px 12px",
-                            borderRadius: "8px",
-                            textDecoration: "none",
-                            fontWeight: "700",
-                            fontSize: "12px",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            width: "fit-content"
-                          }}
-                        >
-                          <MessageSquare size={14} />
-                          <span>👉 Alternative Backup Bot #3 (+34 644 44 49 64)</span>
-                        </a>
-                      </div>
-
-                      <div style={{ fontSize: "11px", color: "#64748b", marginTop: "8px" }}>
-                        <strong>Step 2:</strong> When the bot replies on WhatsApp, copy your <strong>APIKEY</strong> and paste it below.<br />
-                        <em>Note: CallMeBot free API sends alerts to your personal Admin phone number. User approvals will seamlessly open 1-click WhatsApp to message them!</em>
-                      </div>
-                    </div>
-
-                    <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label className="form-label" style={{ color: "#166534" }}>
-                        CallMeBot API Key
-                      </label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder="e.g. 123456"
-                        value={waConfig.callmebotApiKey || ""}
-                        onChange={(e) => setWaConfig({ ...waConfig, callmebotApiKey: e.target.value })}
-                      />
-                      <span className="form-hint" style={{ color: "#15803d" }}>Your personal API key received from CallMeBot on WhatsApp</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Meta WhatsApp Cloud API Fields */}
-                {waConfig.provider === "meta" && (
-                  <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", padding: "16px", borderRadius: "12px", marginBottom: "16px" }}>
-                    <div style={{ fontSize: "13px", fontWeight: "700", color: "#0f172a", marginBottom: "4px" }}>
-                      Meta WhatsApp Cloud API Credentials
-                    </div>
-                    <div style={{ fontSize: "11px", color: "#64748b", marginBottom: "14px" }}>
-                      From your Meta App Dashboard at <a href="https://developers.facebook.com" target="_blank" rel="noreferrer" style={{ color: "#059669", textDecoration: "underline", fontWeight: "700" }}>developers.facebook.com</a> (WhatsApp product):
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Phone Number ID</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder="e.g. 104523985723491"
-                        value={waConfig.metaPhoneNumberId || ""}
-                        onChange={(e) => setWaConfig({ ...waConfig, metaPhoneNumberId: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label className="form-label">System User / Permanent Access Token</label>
-                      <input
-                        type="password"
-                        className="form-input"
-                        placeholder="EAAB..."
-                        value={waConfig.metaAccessToken || ""}
-                        onChange={(e) => setWaConfig({ ...waConfig, metaAccessToken: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* UltraMsg Fields */}
-                {waConfig.provider === "ultramsg" && (
-                  <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", padding: "16px", borderRadius: "12px", marginBottom: "16px" }}>
-                    <div style={{ fontSize: "13px", fontWeight: "700", color: "#0f172a", marginBottom: "4px" }}>
-                      UltraMsg Credentials
-                    </div>
-                    <div style={{ fontSize: "11px", color: "#64748b", marginBottom: "14px" }}>
-                      Create a free instance at <a href="https://ultramsg.com" target="_blank" rel="noreferrer" style={{ color: "#059669", textDecoration: "underline", fontWeight: "700" }}>ultramsg.com</a>, scan the QR code with WhatsApp, and paste your details below:
-                    </div>
-
-                    <div className="form-grid-2">
-                      <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label">Instance ID</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          placeholder="e.g. instance12345"
-                          value={waConfig.ultramsgInstanceId || ""}
-                          onChange={(e) => setWaConfig({ ...waConfig, ultramsgInstanceId: e.target.value })}
-                        />
-                      </div>
-                      <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label">Token</label>
-                        <input
-                          type="password"
-                          className="form-input"
-                          placeholder="UltraMsg Token"
-                          value={waConfig.ultramsgToken || ""}
-                          onChange={(e) => setWaConfig({ ...waConfig, ultramsgToken: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Twilio Fields */}
-                {waConfig.provider === "twilio" && (
-                  <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", padding: "16px", borderRadius: "12px", marginBottom: "16px" }}>
-                    <div style={{ fontSize: "13px", fontWeight: "700", color: "#0f172a", marginBottom: "12px" }}>
-                      Twilio WhatsApp Credentials
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Account SID</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxx"
-                        value={waConfig.twilioAccountSid || ""}
-                        onChange={(e) => setWaConfig({ ...waConfig, twilioAccountSid: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-grid-2">
-                      <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label">Auth Token</label>
-                        <input
-                          type="password"
-                          className="form-input"
-                          placeholder="Twilio Auth Token"
-                          value={waConfig.twilioAuthToken || ""}
-                          onChange={(e) => setWaConfig({ ...waConfig, twilioAuthToken: e.target.value })}
-                        />
-                      </div>
-                      <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label">Twilio WhatsApp Number</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          placeholder="+14155238886"
-                          value={waConfig.twilioFrom || ""}
-                          onChange={(e) => setWaConfig({ ...waConfig, twilioFrom: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Webhook Fields */}
-                {waConfig.provider === "webhook" && (
-                  <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", padding: "16px", borderRadius: "12px", marginBottom: "16px" }}>
-                    <div style={{ fontSize: "13px", fontWeight: "700", color: "#0f172a", marginBottom: "8px" }}>
-                      Webhook / CallMeBot URL
-                    </div>
-                    <div className="form-group" style={{ marginBottom: 0 }}>
-                      <input
-                        type="url"
-                        className="form-input"
-                        placeholder="https://api.callmebot.com/whatsapp.php?phone=...&apikey=..."
-                        value={waConfig.webhookUrl || ""}
-                        onChange={(e) => setWaConfig({ ...waConfig, webhookUrl: e.target.value })}
-                      />
-                      <span className="form-hint">Supports [PHONE] and [TEXT] placeholders</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Admin Phone for instant alerts */}
-                <div className="form-group">
-                  <label className="form-label">Your (Admin) WhatsApp Number for New Signup Alerts</label>
-                  <input
-                    type="tel"
-                    className="form-input"
-                    placeholder="10-digit number (e.g. 9854012345)"
-                    maxLength={10}
-                    value={waConfig.adminPhone || ""}
-                    onChange={(e) => setWaConfig({ ...waConfig, adminPhone: e.target.value })}
-                  />
-                  <span className="form-hint">Whenever someone registers on Xewa, an automated WhatsApp ping is sent to this number</span>
-                </div>
-
-                {/* Automation Toggles */}
-                <div style={{ background: "#f8fafc", padding: "12px 16px", borderRadius: "10px", marginBottom: "20px", display: "flex", flexDirection: "column", gap: "10px", border: "1px solid #e2e8f0" }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", fontWeight: "600", cursor: "pointer", color: "#0f172a" }}>
-                    <input
-                      type="checkbox"
-                      checked={waConfig.autoNotifyOnApproval ?? true}
-                      onChange={(e) => setWaConfig({ ...waConfig, autoNotifyOnApproval: e.target.checked })}
-                      style={{ accentColor: "#16a34a", width: "16px", height: "16px" }}
-                    />
-                    <span>Automatically send WhatsApp message to user when approved</span>
-                  </label>
-
-                  <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", fontWeight: "600", cursor: "pointer", color: "#0f172a" }}>
-                    <input
-                      type="checkbox"
-                      checked={waConfig.autoAlertOnSignup ?? true}
-                      onChange={(e) => setWaConfig({ ...waConfig, autoAlertOnSignup: e.target.checked })}
-                      style={{ accentColor: "#16a34a", width: "16px", height: "16px" }}
-                    />
-                    <span>Automatically alert Admin WhatsApp when a new user registers</span>
-                  </label>
-                </div>
-
-                <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "24px" }}>
-                  <button type="submit" className="btn-primary" style={{ flex: 1 }}>
-                    Save Gateway Settings
-                  </button>
-                </div>
-              </form>
-
-              {/* Test Delivery Section */}
-              <div style={{
-                background: "#ffffff",
-                border: "1.5px dashed #cbd5e1",
-                borderRadius: "14px",
-                padding: "18px 20px"
-              }}>
-                <div style={{ fontSize: "14px", fontWeight: "700", color: "#0f172a", marginBottom: "4px" }}>
-                  Test Automated WhatsApp Delivery
-                </div>
-                <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "12px" }}>
-                  Send a live test message to your phone to confirm your gateway is working:
-                </div>
-                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                  <input
-                    type="tel"
-                    className="form-input"
-                    style={{ flex: 1, minWidth: "180px" }}
-                    placeholder="10-digit phone number"
-                    maxLength={10}
-                    value={testNumber}
-                    onChange={(e) => setTestNumber(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleTestWaMessage}
-                    disabled={testingWa}
-                    style={{
-                      background: "#16a34a",
-                      color: "#ffffff",
-                      padding: "10px 18px",
-                      borderRadius: "8px",
-                      fontSize: "13px",
-                      fontWeight: "700",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px"
-                    }}
-                  >
-                    <MessageSquare size={15} />
-                    <span>{testingWa ? "Sending..." : "Send Test WhatsApp"}</span>
-                  </button>
-                </div>
-              </div>
             </div>
           )}
         </div>

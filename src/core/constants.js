@@ -34,9 +34,24 @@ export function cleanPhone(phone) {
   return phone.replace(/[\s\-\(\)\+]/g, "").slice(-10);
 }
 
-export function formatWhatsAppUrl(phone, listingName = "") {
+export function formatWhatsAppUrl(phone, listingNameOrCustomText = "") {
   const num = cleanPhone(phone);
-  const text = encodeURIComponent(`Hi! I found your listing "${listingName}" on Xewa. Are your services available?`);
+  if (!num) return "";
+  let text = "";
+  if (!listingNameOrCustomText) {
+    text = encodeURIComponent("Hi! I found your service on Xewa. Are your services available?");
+  } else if (
+    listingNameOrCustomText.includes("\n") ||
+    listingNameOrCustomText.includes("*") ||
+    listingNameOrCustomText.startsWith("Hi") ||
+    listingNameOrCustomText.startsWith("Hello") ||
+    listingNameOrCustomText.startsWith("🔔") ||
+    listingNameOrCustomText.startsWith("📋")
+  ) {
+    text = encodeURIComponent(listingNameOrCustomText);
+  } else {
+    text = encodeURIComponent(`Hi! I found your listing "${listingNameOrCustomText}" on Xewa. Are your services available?`);
+  }
   return `https://wa.me/91${num}?text=${text}`;
 }
 

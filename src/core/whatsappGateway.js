@@ -3,7 +3,7 @@ import { cleanPhone, formatWhatsAppUrl } from "./constants";
 const STORAGE_KEY = "xewa_whatsapp_gateway_config";
 
 export const DEFAULT_CONFIG = {
-  provider: "callmebot", // 'callmebot' | 'ultramsg' | 'meta' | 'twilio' | 'webhook'
+  provider: "direct", // 'direct' | 'callmebot' | 'ultramsg' | 'meta' | 'twilio' | 'webhook'
   enabled: true,
   autoNotifyOnApproval: true,
   autoAlertOnSignup: true,
@@ -64,15 +64,45 @@ export async function sendAutomatedWhatsApp({ to, message }) {
   // Format with India 91 prefix if 10 digits
   const fullTo = cleanTo.length === 10 ? `91${cleanTo}` : cleanTo;
 
-  // 1. CallMeBot (100% Free Forever for personal WhatsApp alerts)
-  if (config.provider === "callmebot" && config.callmebotApiKey) {
+  // 0. Direct 1-Click WhatsApp Mode (Zero Setup, 100% Reliable)
+  if (config.provider === "direct") {
+    return {
+      success: false,
+      fallbackToDirect: true,
+      provider: "direct",
+      error: "Direct 1-Click WhatsApp mode active."
+    };
+  }
+
+  // 1. CallMeBot (100% Free Forever for personal WhatsApp alerts to Admin)
+  if (config.provider === "callmebot") {
+    if (!config.callmebotApiKey) {
+      return {
+        success: false,
+        fallbackToDirect: true,
+        error: "CallMeBot API key not configured yet. Falling back to direct WhatsApp."
+      };
+    }
+
+    const cleanAdmin = cleanPhone(config.adminPhone || "");
+    const fullAdmin = cleanAdmin.length === 10 ? `91${cleanAdmin}` : cleanAdmin;
+
+    // CallMeBot strictly sends messages to the number that registered the API key (Admin phone)
+    if (fullAdmin && fullTo !== fullAdmin) {
+      return {
+        success: false,
+        fallbackToDirect: true,
+        error: "CallMeBot only delivers alerts to your registered Admin WhatsApp. Falling back to direct WhatsApp for users."
+      };
+    }
+
     try {
       const encodedMsg = encodeURIComponent(message);
       const url = `https://api.callmebot.com/whatsapp.php?phone=${fullTo}&text=${encodedMsg}&apikey=${config.callmebotApiKey.trim()}`;
       await fetch(url, { method: "GET", mode: "no-cors" });
       return { success: true, provider: "callmebot" };
     } catch (err) {
-      return { success: false, error: err.message };
+      return { success: false, fallbackToDirect: true, error: err.message };
     }
   }
 

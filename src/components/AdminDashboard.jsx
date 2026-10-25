@@ -698,11 +698,45 @@ export default function AdminDashboard({
                     value={waConfig.provider}
                     onChange={(e) => setWaConfig({ ...waConfig, provider: e.target.value })}
                   >
+                    <option value="meta">Meta WhatsApp Cloud API (Official — 1,000 Free Messages/Month)</option>
                     <option value="ultramsg">UltraMsg (Recommended — Easy QR Scan / No Business Verification Needed)</option>
                     <option value="twilio">Twilio WhatsApp API (Enterprise Cloud Gateway)</option>
                     <option value="webhook">Custom Webhook / CallMeBot / Zapier</option>
                   </select>
                 </div>
+
+                {/* Meta WhatsApp Cloud API Fields */}
+                {waConfig.provider === "meta" && (
+                  <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", padding: "16px", borderRadius: "12px", marginBottom: "16px" }}>
+                    <div style={{ fontSize: "13px", fontWeight: "700", color: "#0f172a", marginBottom: "4px" }}>
+                      Meta WhatsApp Cloud API Credentials
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#64748b", marginBottom: "14px" }}>
+                      From your Meta App Dashboard at <a href="https://developers.facebook.com" target="_blank" rel="noreferrer" style={{ color: "#059669", textDecoration: "underline", fontWeight: "700" }}>developers.facebook.com</a> (WhatsApp product):
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Phone Number ID</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="e.g. 104523985723491"
+                        value={waConfig.metaPhoneNumberId || ""}
+                        onChange={(e) => setWaConfig({ ...waConfig, metaPhoneNumberId: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">System User / Permanent Access Token</label>
+                      <input
+                        type="password"
+                        className="form-input"
+                        placeholder="EAAB..."
+                        value={waConfig.metaAccessToken || ""}
+                        onChange={(e) => setWaConfig({ ...waConfig, metaAccessToken: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* UltraMsg Fields */}
                 {waConfig.provider === "ultramsg" && (

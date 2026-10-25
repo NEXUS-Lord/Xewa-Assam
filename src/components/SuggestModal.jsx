@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { X, Upload, Plus, Trash2, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
 import { CITIES, CATEGORIES, isValidIndianPhone, cleanPhone } from "../core/constants";
 import { listingsRepo } from "../data/listingsRepo";
+import { sendAutomatedAdminListingAlert } from "../core/whatsappGateway";
 
 export default function SuggestModal({
   currentUser,
@@ -127,6 +128,9 @@ export default function SuggestModal({
     if (error) {
       setErrorMsg(error);
     } else {
+      // Trigger automated WhatsApp alert to Admin in the background
+      sendAutomatedAdminListingAlert(payload, currentUser);
+
       setSubmittedSuccess(true);
       onShowToast?.("Listing submitted! Our admins will review and publish it.", "success");
       onSuccess?.();

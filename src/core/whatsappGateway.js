@@ -3,11 +3,16 @@ import { cleanPhone, formatWhatsAppUrl } from "./constants";
 const STORAGE_KEY = "xewa_whatsapp_gateway_config";
 
 export const DEFAULT_CONFIG = {
-  provider: "ultramsg", // 'ultramsg' | 'twilio' | 'webhook'
+  provider: "ultramsg", // 'ultramsg' | 'meta' | 'twilio' | 'webhook'
   enabled: true,
   autoNotifyOnApproval: true,
   autoAlertOnSignup: true,
+  autoAlertOnListing: true,
   adminPhone: import.meta.env.VITE_ADMIN_WHATSAPP || "",
+
+  // Meta WhatsApp Cloud API (1,000 Free conversations/month)
+  metaPhoneNumberId: import.meta.env.VITE_META_PHONE_NUMBER_ID || "",
+  metaAccessToken: import.meta.env.VITE_META_ACCESS_TOKEN || "",
 
   // UltraMsg configuration
   ultramsgInstanceId: import.meta.env.VITE_ULTRAMSG_INSTANCE_ID || "",
@@ -56,7 +61,39 @@ export async function sendAutomatedWhatsApp({ to, message }) {
   // Format with India 91 prefix if 10 digits
   const fullTo = cleanTo.length === 10 ? `91${cleanTo}` : cleanTo;
 
-  // 1. UltraMsg Gateway
+  // 1. Meta WhatsApp Cloud API (1,000 Free conversations/month)
+  if (config.provider === "meta" && config.metaPhoneNumberId && config.metaAccessToken) {
+    try {
+      const url = `https://graph.facebook.com/v19.0/${config.metaPhoneNumberId.trim()}/messages`;
+      const payload = {
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: fullTo,
+        type: "text",
+        text: { preview_url: true, body: message }
+      };
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${config.metaAccessToken.trim()}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const json = await res.json();
+      if (res.ok && json.messages) {
+        return { success: true, provider: "meta", messageId: json.messages[0]?.id };
+      } else {
+        return { success: false, error: json.error?.message || "Meta Cloud API delivery failed" };
+      }
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  }
+
+  // 2. UltraMsg Gateway
   if (config.provider === "ultramsg" && config.ultramsgInstanceId && config.ultramsgToken) {
     try {
       const url = `https://api.ultramsg.com/${config.ultramsgInstanceId.trim()}/messages/chat`;
@@ -83,7 +120,7 @@ export async function sendAutomatedWhatsApp({ to, message }) {
     }
   }
 
-  // 2. Twilio Gateway
+  // 3. Twilio Gateway
   if (config.provider === "twilio" && config.twilioAccountSid && config.twilioAuthToken) {
     try {
       const url = `https://api.twilio.com/2010-04-01/Accounts/${config.twilioAccountSid.trim()}/Messages.json`;
@@ -116,7 +153,7 @@ export async function sendAutomatedWhatsApp({ to, message }) {
     }
   }
 
-  // 3. Generic Webhook Gateway
+  // 4. Generic Webhook Gateway
   if (config.webhookUrl) {
     try {
       let url = config.webhookUrl;
@@ -162,6 +199,19 @@ export async function sendAutomatedAdminSignupAlert(user) {
   if (!config.adminPhone) return { success: false, reason: "No admin phone set" };
 
   const message = `🔔 *New Registration on Xewa!*\n\n• *Name:* ${user.full_name}\n• *Email:* ${user.email}\n• *Calling:* +91 ${user.phone}\n• *WhatsApp:* +91 ${user.whatsapp || user.phone}\n\nPlease review and approve in the Admin Portal: https://xewa-assam.netlify.app`;
+
+  const result = await sendAutomatedWhatsApp({ to: config.adminPhone, message });
+  return result;
+}
+
+/**
+ * Dispatches automated new listing alert to Admin.
+ */
+export async function sendAutomatedAdminListingAlert(listing, user) {
+  const config = getWhatsAppConfig();
+  if (!config.adminPhone) return { success: false, reason: "No admin phone set" };
+
+  const message = `📋 *New Listing Submitted on Xewa!*\n\n• *Business:* ${listing.name}\n• *Category:* ${listing.category_slug}\n• *City/Locality:* ${listing.city_name || "Assam"} (${listing.locality})\n• *Phone:* +91 ${listing.phone}\n• *Submitted by:* ${user?.full_name || "Guest"}\n\nPlease review and publish in the Admin Portal: https://xewa-assam.netlify.app`;
 
   const result = await sendAutomatedWhatsApp({ to: config.adminPhone, message });
   return result;

@@ -5,9 +5,9 @@ export const DEFAULT_EMAIL_CONFIG = {
   adminEmail: import.meta.env.VITE_ADMIN_EMAIL || "nilamx3000@gmail.com",
 
   // EmailJS credentials (Free 200 emails/month forever — sends to ANY user's email)
-  emailjsServiceId: import.meta.env.VITE_EMAILJS_SERVICE_ID || "",
-  emailjsTemplateId: import.meta.env.VITE_EMAILJS_TEMPLATE_ID || "",
-  emailjsPublicKey: import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "",
+  emailjsServiceId: import.meta.env.VITE_EMAILJS_SERVICE_ID || "service_52abcjs",
+  emailjsTemplateId: import.meta.env.VITE_EMAILJS_TEMPLATE_ID || "vu8ubbs",
+  emailjsPublicKey: import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "praneds1I8Lqt2QvL",
 
   // Web3Forms access key (Free unlimited form-to-inbox alerts for admin)
   web3formsKey: import.meta.env.VITE_WEB3FORMS_KEY || "",

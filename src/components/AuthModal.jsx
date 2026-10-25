@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { X, User, Lock, Mail, Phone, MessageSquare, ShieldCheck, AlertCircle } from "lucide-react";
 import { authRepo } from "../data/authRepo";
 import { isValidIndianPhone, cleanPhone } from "../core/constants";
-import { notifyAdminOnSignup } from "../core/whatsappAlert";
+import { sendAdminSignupEmailAlert } from "../core/emailAlert";
 
 export default function AuthModal({
   onClose,
@@ -74,10 +74,10 @@ export default function AuthModal({
         whatsapp: finalWhatsApp
       };
 
-      // Trigger WhatsApp alert to Admin
-      notifyAdminOnSignup(userPayload);
+      // Trigger automated background email alert to Admin
+      sendAdminSignupEmailAlert(userPayload);
 
-      onShowToast?.("Account created! Opening WhatsApp to alert the Admin for approval. 🚀", "success");
+      onShowToast?.("Account created! An automated email alert has been sent to Admin for review. 🚀", "success");
       onLoginSuccess(data);
       onClose();
     }

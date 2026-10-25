@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   X, Shield, CheckCircle, XCircle, AlertTriangle, Users,
-  ListFilter, Plus, RefreshCw, Trash2, Eye, ShieldAlert, Check, Database, MessageSquare
+  ListFilter, Plus, RefreshCw, Trash2, Eye, ShieldAlert, Check, Database, MessageSquare, Mail, Send
 } from "lucide-react";
 import { listingsRepo } from "../data/listingsRepo";
 import { authRepo } from "../data/authRepo";
@@ -12,6 +12,11 @@ import {
   getAdminWhatsApp,
   saveAdminWhatsApp
 } from "../core/whatsappAlert";
+import {
+  getEmailConfig,
+  saveEmailConfig,
+  sendTestEmailAlert
+} from "../core/emailAlert";
 
 export default function AdminDashboard({
   currentUser,
@@ -29,6 +34,9 @@ export default function AdminDashboard({
   const [loading, setLoading] = useState(false);
   const [adminPhone, setAdminPhone] = useState(() => getAdminWhatsApp());
   const [adminPhoneInput, setAdminPhoneInput] = useState(() => getAdminWhatsApp());
+  const [emailConfig, setEmailConfig] = useState(() => getEmailConfig());
+  const [showEmailSettings, setShowEmailSettings] = useState(false);
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -106,6 +114,28 @@ export default function AdminDashboard({
     onShowToast?.(`Admin WhatsApp updated to +91 ${cleaned}! ✅`, "success");
   };
 
+  const handleSaveEmailConfig = () => {
+    saveEmailConfig(emailConfig);
+    onShowToast?.("Email alert settings saved! 📧", "success");
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!emailConfig.adminEmail) {
+      onShowToast?.("Please enter a recipient email address.", "error");
+      return;
+    }
+    setSendingTestEmail(true);
+    const res = await sendTestEmailAlert(emailConfig.adminEmail);
+    setSendingTestEmail(false);
+    if (res.delivered) {
+      onShowToast?.(`Test email delivered to ${emailConfig.adminEmail}! Check inbox/spam. 🚀`, "success");
+    } else if (res.simulated) {
+      onShowToast?.(`Alert generated! To receive it in Gmail, paste your free Web3Forms key.`, "info");
+    } else {
+      onShowToast?.("Test failed: " + (res.error || "Please check your key"), "error");
+    }
+  };
+
   const handleResolveReport = async (reportId) => {
     await reportsRepo.resolveReport(reportId);
     onShowToast?.("Report marked as resolved.", "success");
@@ -133,6 +163,14 @@ export default function AdminDashboard({
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <button
               className="btn-icon"
+              onClick={() => setShowEmailSettings(!showEmailSettings)}
+              title="Automated Email Alerts Configuration"
+              style={{ color: emailConfig.web3formsKey ? "#059669" : "#0284c7" }}
+            >
+              <Mail size={15} />
+            </button>
+            <button
+              className="btn-icon"
               onClick={onOpenSupabaseConfig}
               title="Database / Supabase Backend Settings"
               style={{ color: "#059669" }}
@@ -147,6 +185,94 @@ export default function AdminDashboard({
             </button>
           </div>
         </div>
+
+        {/* Email Alert Configuration Panel */}
+        {showEmailSettings && (
+          <div style={{
+            background: "#f0fdf4",
+            borderBottom: "1.5px solid #86efac",
+            padding: "16px 20px"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Mail size={17} color="#16a34a" />
+                <strong style={{ fontSize: "14px", color: "#166534" }}>Automated Background Email Alerts</strong>
+              </div>
+              <button
+                onClick={() => setShowEmailSettings(false)}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="form-grid-2" style={{ marginBottom: "12px" }}>
+              <div>
+                <label style={{ fontSize: "12px", fontWeight: "700", color: "#166534", display: "block", marginBottom: "4px" }}>
+                  Your Admin Alert Email
+                </label>
+                <input
+                  type="email"
+                  className="form-input"
+                  value={emailConfig.adminEmail || ""}
+                  onChange={(e) => setEmailConfig({ ...emailConfig, adminEmail: e.target.value })}
+                  placeholder="nilamx3000@gmail.com"
+                  style={{ background: "#ffffff" }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: "12px", fontWeight: "700", color: "#166534", display: "block", marginBottom: "4px" }}>
+                  Free Web3Forms Access Key
+                </label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={emailConfig.web3formsKey || ""}
+                  onChange={(e) => setEmailConfig({ ...emailConfig, web3formsKey: e.target.value })}
+                  placeholder="e.g. 1a2b3c4d-5e6f-..."
+                  style={{ background: "#ffffff" }}
+                />
+              </div>
+            </div>
+
+            <div style={{ fontSize: "11px", color: "#334155", background: "#ffffff", padding: "8px 12px", borderRadius: "8px", border: "1px solid #bbf7d0", marginBottom: "12px", lineHeight: "1.5" }}>
+              ⚡ <strong>100% Free Forever:</strong> To receive automated emails in your inbox, go to <a href="https://web3forms.com" target="_blank" rel="noreferrer" style={{ color: "#16a34a", fontWeight: "800", textDecoration: "underline" }}>web3forms.com</a>, type <strong>{emailConfig.adminEmail || "your email"}</strong>, and click <em>"Create Access Key"</em>. Web3Forms immediately sends your key to your email! Paste it above.
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              <button
+                type="button"
+                onClick={handleSaveEmailConfig}
+                className="btn-primary"
+                style={{ padding: "7px 16px", fontSize: "12px" }}
+              >
+                Save Settings
+              </button>
+              <button
+                type="button"
+                onClick={handleSendTestEmail}
+                disabled={sendingTestEmail}
+                style={{
+                  background: "#ffffff",
+                  border: "1px solid #86efac",
+                  borderRadius: "8px",
+                  padding: "7px 14px",
+                  fontSize: "12px",
+                  fontWeight: "700",
+                  color: "#166534",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  cursor: "pointer"
+                }}
+              >
+                <Send size={13} color="#16a34a" />
+                <span>{sendingTestEmail ? "Sending test..." : "Send Test Email to Inbox"}</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Tab Navigation */}
         <div style={{ display: "flex", borderBottom: "1px solid #e2e8f0", background: "#f8fafc", padding: "0 20px" }}>

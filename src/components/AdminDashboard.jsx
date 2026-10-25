@@ -15,7 +15,9 @@ import {
 import {
   getEmailConfig,
   saveEmailConfig,
-  sendTestEmailAlert
+  sendTestEmailAlert,
+  sendUserApprovalEmail,
+  sendListingStatusEmail
 } from "../core/emailAlert";
 
 export default function AdminDashboard({
@@ -63,14 +65,22 @@ export default function AdminDashboard({
   }, []);
 
   const handleApproveListing = async (listingId) => {
+    const lst = pendingListings.find(l => l.id === listingId) || allListings.find(l => l.id === listingId);
     await listingsRepo.updateListing(listingId, { status: "approved", is_verified: true });
-    onShowToast?.("Listing approved and published! ✅", "success");
+    if (lst) {
+      sendListingStatusEmail(lst, lst.owner_email, true);
+    }
+    onShowToast?.("Listing approved & published! Automated email sent. ✅", "success");
     loadData();
   };
 
   const handleRejectListing = async (listingId) => {
+    const lst = pendingListings.find(l => l.id === listingId) || allListings.find(l => l.id === listingId);
     await listingsRepo.updateListing(listingId, { status: "rejected" });
-    onShowToast?.("Listing marked as rejected.", "info");
+    if (lst) {
+      sendListingStatusEmail(lst, lst.owner_email, false);
+    }
+    onShowToast?.("Listing rejected. Notification email sent.", "info");
     loadData();
   };
 
@@ -83,11 +93,15 @@ export default function AdminDashboard({
   };
 
   const handleToggleUserApproval = async (targetUserId, approved) => {
+    const targetUser = users.find(u => u.id === targetUserId);
     const { error } = await authRepo.setUserApproval(targetUserId, approved);
     if (error) {
       onShowToast?.(error, "error");
     } else {
-      onShowToast?.(approved ? "User approved! They can now contribute." : "User access revoked.", "success");
+      if (targetUser) {
+        sendUserApprovalEmail(targetUser, approved);
+      }
+      onShowToast?.(approved ? `User approved & confirmation email sent to ${targetUser?.email || "user"}! 🎉` : "User access revoked. Status email sent.", "success");
       loadData();
     }
   };
@@ -206,10 +220,10 @@ export default function AdminDashboard({
               </button>
             </div>
 
-            <div className="form-grid-2" style={{ marginBottom: "12px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
               <div>
-                <label style={{ fontSize: "12px", fontWeight: "700", color: "#166534", display: "block", marginBottom: "4px" }}>
-                  Your Admin Alert Email
+                <label style={{ fontSize: "11px", fontWeight: "700", color: "#166534", display: "block", marginBottom: "3px" }}>
+                  Admin Alert Email
                 </label>
                 <input
                   type="email"
@@ -217,13 +231,13 @@ export default function AdminDashboard({
                   value={emailConfig.adminEmail || ""}
                   onChange={(e) => setEmailConfig({ ...emailConfig, adminEmail: e.target.value })}
                   placeholder="nilamx3000@gmail.com"
-                  style={{ background: "#ffffff" }}
+                  style={{ background: "#ffffff", padding: "6px 10px", fontSize: "12px" }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: "12px", fontWeight: "700", color: "#166534", display: "block", marginBottom: "4px" }}>
-                  Free Web3Forms Access Key
+                <label style={{ fontSize: "11px", fontWeight: "700", color: "#166534", display: "block", marginBottom: "3px" }}>
+                  Web3Forms Key (Admin Alerts)
                 </label>
                 <input
                   type="text"
@@ -231,13 +245,54 @@ export default function AdminDashboard({
                   value={emailConfig.web3formsKey || ""}
                   onChange={(e) => setEmailConfig({ ...emailConfig, web3formsKey: e.target.value })}
                   placeholder="e.g. 1a2b3c4d-5e6f-..."
-                  style={{ background: "#ffffff" }}
+                  style={{ background: "#ffffff", padding: "6px 10px", fontSize: "12px" }}
                 />
               </div>
             </div>
 
-            <div style={{ fontSize: "11px", color: "#334155", background: "#ffffff", padding: "8px 12px", borderRadius: "8px", border: "1px solid #bbf7d0", marginBottom: "12px", lineHeight: "1.5" }}>
-              ⚡ <strong>100% Free Forever:</strong> To receive automated emails in your inbox, go to <a href="https://web3forms.com" target="_blank" rel="noreferrer" style={{ color: "#16a34a", fontWeight: "800", textDecoration: "underline" }}>web3forms.com</a>, type <strong>{emailConfig.adminEmail || "your email"}</strong>, and click <em>"Create Access Key"</em>. Web3Forms immediately sends your key to your email! Paste it above.
+            {/* EmailJS Outbound Configuration for User Notifications */}
+            <div style={{ background: "#ffffff", border: "1px solid #bbf7d0", padding: "10px 14px", borderRadius: "10px", marginBottom: "12px" }}>
+              <div style={{ fontSize: "12px", fontWeight: "700", color: "#166534", marginBottom: "6px" }}>
+                📧 Outbound Emails to Users (EmailJS — Free 200/mo):
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
+                <div>
+                  <label style={{ fontSize: "10px", color: "#64748b", fontWeight: "600", display: "block", marginBottom: "2px" }}>Service ID</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={emailConfig.emailjsServiceId || ""}
+                    onChange={(e) => setEmailConfig({ ...emailConfig, emailjsServiceId: e.target.value })}
+                    placeholder="service_xxx"
+                    style={{ padding: "4px 8px", fontSize: "11px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: "10px", color: "#64748b", fontWeight: "600", display: "block", marginBottom: "2px" }}>Template ID</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={emailConfig.emailjsTemplateId || ""}
+                    onChange={(e) => setEmailConfig({ ...emailConfig, emailjsTemplateId: e.target.value })}
+                    placeholder="template_xxx"
+                    style={{ padding: "4px 8px", fontSize: "11px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: "10px", color: "#64748b", fontWeight: "600", display: "block", marginBottom: "2px" }}>Public Key</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={emailConfig.emailjsPublicKey || ""}
+                    onChange={(e) => setEmailConfig({ ...emailConfig, emailjsPublicKey: e.target.value })}
+                    placeholder="public_xxx"
+                    style={{ padding: "4px 8px", fontSize: "11px" }}
+                  />
+                </div>
+              </div>
+              <span style={{ fontSize: "10px", color: "#64748b", marginTop: "4px", display: "block" }}>
+                ⚡ Free setup at <a href="https://www.emailjs.com" target="_blank" rel="noreferrer" style={{ color: "#16a34a", textDecoration: "underline", fontWeight: "700" }}>emailjs.com</a>: Connects your Gmail to automatically email users when you accept/reject their account or listings!
+              </span>
             </div>
 
             <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>

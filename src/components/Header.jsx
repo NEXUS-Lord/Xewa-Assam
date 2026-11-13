@@ -50,12 +50,14 @@ export default function Header({
                 boxShadow: "0 16px 40px rgba(0,0,0,0.35)",
                 padding: "6px",
                 zIndex: 200,
-                minWidth: "160px",
+                minWidth: "220px",
+                maxHeight: "min(70vh, 480px)",
+                overflowY: "auto",
                 animation: "slideUp 0.15s ease-out"
               }}
             >
               <div style={{ padding: "6px 10px", fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                Select Town
+                Select District
               </div>
               {CITIES.map(c => (
                 <button

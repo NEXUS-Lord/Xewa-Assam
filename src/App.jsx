@@ -35,7 +35,7 @@ export default function App() {
       const found = CITIES.find(c => c.id === Number(saved));
       if (found) return found;
     }
-    return CITIES[0]; // Tezpur default
+    return CITIES.find(c => c.id === 1); // Sonitpur default (the existing Tezpur listings)
   });
 
   // Category filter state
@@ -417,7 +417,7 @@ export default function App() {
           <span style={{ fontSize: "13px", color: "#64748b" }}>— {kAppTagline}</span>
         </div>
         <p style={{ fontSize: "13px", color: "#94a3b8", maxWidth: "480px", margin: "0 auto 14px", lineHeight: "1.6" }}>
-          A local service directory dedicated to small towns of Assam, starting with Tezpur & Nagaon.
+          A district-wide local service directory for Assam, with current listings focused on Tezpur and Nagaon.
         </p>
         <div style={{
           width: "60px",

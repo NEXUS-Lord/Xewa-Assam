@@ -1501,3 +1501,210 @@ a {
   }
 }
 
+/* Xewa visual refresh: calmer surfaces, clearer spacing, and softer depth. */
+.app-container {
+  max-width: 1360px;
+  background: #f8faf8;
+  box-shadow: 0 0 48px rgba(15, 40, 31, 0.06);
+}
+
+.navbar {
+  background: rgba(16, 48, 38, 0.97);
+  border-bottom-color: rgba(228, 190, 112, 0.22);
+  padding: 12px 28px;
+  box-shadow: 0 5px 22px rgba(15, 40, 31, 0.14);
+}
+
+.brand-title {
+  background: linear-gradient(120deg, #f8faf6 0%, #d6f1df 70%, #f4d58c 100%);
+}
+
+.brand-tagline {
+  color: #c0d2c9;
+  font-weight: 500;
+}
+
+.city-pill {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #eef7f1;
+  padding: 8px 14px;
+}
+
+.city-pill:hover {
+  background: rgba(255, 255, 255, 0.13);
+  border-color: rgba(231, 195, 119, 0.45);
+  box-shadow: none;
+}
+
+.hero-section {
+  background:
+    radial-gradient(ellipse at 78% 18%, rgba(226, 188, 105, 0.14), transparent 32%),
+    linear-gradient(135deg, #12382d 0%, #1b5942 58%, #25704f 100%);
+  border-radius: 0 0 30px 30px;
+  padding: 62px 28px 68px;
+  box-shadow: 0 12px 34px rgba(18, 56, 45, 0.16);
+}
+
+.hero-section::before {
+  background:
+    radial-gradient(ellipse 600px 400px at 18% 62%, rgba(94, 185, 130, 0.12), transparent),
+    radial-gradient(ellipse 400px 300px at 85% 20%, rgba(248, 220, 155, 0.09), transparent);
+  animation: none;
+}
+
+.hero-section::after {
+  background-size: 32px 32px;
+  opacity: 0.5;
+}
+
+.hero-glow {
+  opacity: 0.55;
+  animation: none;
+}
+
+.hero-badge {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #e4f1e8;
+  letter-spacing: 0.55px;
+}
+
+.hero-title {
+  max-width: 720px;
+  margin: 0 auto 14px;
+  font-size: clamp(30px, 4vw, 44px);
+  letter-spacing: -1.2px;
+  line-height: 1.12;
+}
+
+.hero-subtitle {
+  max-width: 640px;
+  margin: 0 auto 30px;
+  color: rgba(239, 247, 241, 0.82);
+  font-size: 15px;
+}
+
+.search-input-group {
+  padding: 8px 10px 8px 20px;
+  box-shadow: 0 12px 30px rgba(4, 25, 18, 0.22);
+}
+
+.search-input-group:focus-within {
+  border-color: #c5dfca;
+  box-shadow: 0 12px 32px rgba(4, 25, 18, 0.2), 0 0 0 4px rgba(205, 231, 211, 0.15);
+}
+
+.section-wrapper {
+  padding: 38px 28px;
+}
+
+.section-header {
+  margin-bottom: 22px;
+}
+
+.section-title {
+  font-size: 22px;
+  letter-spacing: -0.35px;
+}
+
+.section-subtitle {
+  color: #718078;
+}
+
+.categories-grid {
+  gap: 16px;
+}
+
+.category-card {
+  border-color: #e3eae4;
+  border-radius: 18px;
+  padding: 20px 18px;
+  box-shadow: 0 3px 12px rgba(22, 47, 35, 0.035);
+}
+
+.category-card::before {
+  background: linear-gradient(90deg, #2f8060, #d9b76e);
+}
+
+.category-card:hover {
+  transform: translateY(-3px);
+  border-color: #b9d2c1;
+  box-shadow: 0 12px 26px rgba(22, 79, 52, 0.09);
+}
+
+.category-card.active {
+  background: linear-gradient(150deg, #f0f7f1, #ffffff 80%);
+  border-color: #6da685;
+  box-shadow: 0 7px 20px rgba(42, 112, 75, 0.1);
+}
+
+.cat-icon-box {
+  background: #eff6f0;
+  color: #286447;
+}
+
+.listing-card {
+  border-color: #e3eae4;
+  border-radius: 18px;
+  box-shadow: 0 4px 16px rgba(20, 45, 32, 0.055);
+}
+
+.listing-card:hover {
+  box-shadow: 0 14px 28px rgba(20, 45, 32, 0.11);
+}
+
+.listing-photo-box {
+  background: #e8eee9;
+}
+
+.filter-bar {
+  background: #ffffff;
+  border-color: #e4ebe5;
+  border-radius: 16px;
+  box-shadow: 0 3px 12px rgba(20, 45, 32, 0.035);
+}
+
+.empty-state {
+  border-color: #dfe8e0;
+  background: linear-gradient(145deg, #ffffff, #f5f9f5);
+}
+
+.btn-call,
+.btn-whatsapp {
+  border-radius: 10px;
+}
+
+button:focus-visible,
+a:focus-visible,
+.category-card:focus-visible {
+  outline: 3px solid rgba(58, 128, 88, 0.5);
+  outline-offset: 3px;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    padding: 10px 14px;
+  }
+
+  .hero-section {
+    padding: 46px 18px 52px;
+    border-radius: 0 0 22px 22px;
+  }
+
+  .section-wrapper {
+    padding: 30px 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+

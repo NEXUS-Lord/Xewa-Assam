@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="1584" viewBox="0 0 1120 1584">
+  <defs>
+    <pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="2" fill="#73977c" fill-opacity=".22"/>
+    </pattern>
+    <linearGradient id="topGreen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#183e2c"/>
+      <stop offset="1" stop-color="#2d6543"/>
+    </linearGradient>
+    <linearGradient id="bottomGreen" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#183e2c"/>
+      <stop offset="1" stop-color="#315d3f"/>
+    </linearGradient>
+  </defs>
+  <rect width="1120" height="1584" fill="#fff"/>
+  <path d="M0 0h282L0 402z" fill="url(#topGreen)"/>
+  <path d="M0 0h238L0 333z" fill="#244f36"/>
+  <path d="M0 191 188 0h39L0 238z" fill="#b99552"/>
+  <path d="M0 264 260 0h25L0 290z" fill="#cbd8c9" fill-opacity=".82"/>
+  <path d="M0 0h118L0 165z" fill="#123324" fill-opacity=".65"/>
+  <path d="M1120 0v268H835z" fill="url(#dots)"/>
+  <path d="M0 1584v-255l314 255z" fill="url(#dots)"/>
+  <path d="M1120 1584H752l368-357z" fill="url(#bottomGreen)"/>
+  <path d="M1120 1430 964 1584h-63l219-216z" fill="#b99552"/>
+  <path d="M1120 1365 899 1584h-38l259-257z" fill="#d7dfd4"/>
+  <path d="M0 1566h1120v18H0z" fill="#183e2c"/>
+</svg>

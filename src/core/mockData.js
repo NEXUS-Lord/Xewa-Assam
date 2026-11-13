@@ -219,6 +219,63 @@ export const INITIAL_DEMO_LISTINGS = [
   }
 ];
 
+// One clearly labeled, non-contactable sample listing for each Assam district.
+// These are shown alongside live listings so newly added districts have
+// realistic-looking content during project demonstrations.
+const DISTRICT_DEMO_ROWS = [
+  [1, "Sonitpur"], [2, "Nagaon"], [3, "Baksa"], [4, "Barpeta"], [5, "Bajali"],
+  [6, "Biswanath"], [7, "Bongaigaon"], [8, "Cachar"], [9, "Charaideo"], [10, "Chirang"],
+  [11, "Darrang"], [12, "Dhemaji"], [13, "Dhubri"], [14, "Dibrugarh"], [15, "Dima Hasao"],
+  [16, "Goalpara"], [17, "Golaghat"], [18, "Hailakandi"], [19, "Hojai"], [20, "Jorhat"],
+  [21, "Kamrup"], [22, "Kamrup Metropolitan"], [23, "Karbi Anglong"], [24, "Karimganj"],
+  [25, "Kokrajhar"], [26, "Lakhimpur"], [27, "Majuli"], [28, "Morigaon"], [29, "Nalbari"],
+  [30, "Sivasagar"], [31, "South Salmara-Mancachar"], [32, "Tinsukia"], [33, "Tamulpur"],
+  [34, "Udalguri"], [35, "West Karbi Anglong"]
+];
+
+const districtSampleServices = [
+  { category_id: 1, category_slug: "tutors", name: "Community Learning Centre", type: "tutoring and coaching" },
+  { category_id: 4, category_slug: "repair", name: "Neighbourhood Repair Help", type: "home repair" },
+  { category_id: 3, category_slug: "mess-food", name: "Local Food and Tiffin Service", type: "food and tiffin" },
+  { category_id: 5, category_slug: "delivery", name: "Everyday Essentials Delivery", type: "local delivery" },
+  { category_id: 6, category_slug: "other", name: "Community Services Listing", type: "local services" }
+];
+
+export const DISTRICT_DEMO_LISTINGS = DISTRICT_DEMO_ROWS.map(([city_id, city_name]) => {
+  const service = districtSampleServices[(city_id - 1) % districtSampleServices.length];
+  return {
+    id: `demo-district-${city_id}`,
+    city_id,
+    city_name,
+    category_id: service.category_id,
+    category_slug: service.category_slug,
+    name: `[DEMO] ${city_name} ${service.name}`,
+    description: `Sample ${service.type} listing for the Xewa Assam project demonstration in ${city_name}. This is placeholder content, not a real service provider.`,
+    phone: "0000000000",
+    whatsapp: "0000000000",
+    locality: "District-wide sample",
+    address: "Demonstration record only; no real business address.",
+    price_info: "Sample listing",
+    opening_hours: "Demo content",
+    status: "approved",
+    is_verified: false,
+    avg_rating: 0,
+    review_count: 0,
+    owner_id: null,
+    photos: [],
+    created_at: "2026-11-13T00:00:00Z",
+    is_demo: true
+  };
+});
+
+export const ALL_DEMO_LISTINGS = [
+  ...INITIAL_DEMO_LISTINGS.map(listing => ({
+    ...listing,
+    city_name: listing.city_id === 1 ? "Sonitpur" : listing.city_name
+  })),
+  ...DISTRICT_DEMO_LISTINGS.filter(sample => sample.city_id > 2)
+];
+
 export const INITIAL_DEMO_REPORTS = [
   {
     id: "rep-01",

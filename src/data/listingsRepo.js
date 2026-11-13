@@ -1,19 +1,37 @@
 import { getSupabaseClient, isSupabaseConfigured } from "../core/supabase";
-import { INITIAL_DEMO_LISTINGS } from "../core/mockData";
+import { ALL_DEMO_LISTINGS } from "../core/mockData";
 
 const LOCAL_STORAGE_KEY = "xewa_listings_store";
 
 function getLocalListings() {
   const data = localStorage.getItem(LOCAL_STORAGE_KEY);
   if (!data) {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(INITIAL_DEMO_LISTINGS));
-    return [...INITIAL_DEMO_LISTINGS];
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(ALL_DEMO_LISTINGS));
+    return [...ALL_DEMO_LISTINGS];
   }
   try {
-    return JSON.parse(data);
+    const saved = JSON.parse(data);
+    const byId = new Map(ALL_DEMO_LISTINGS.map(item => [item.id, item]));
+    (Array.isArray(saved) ? saved : []).forEach(item => byId.set(item.id, item));
+    return [...byId.values()];
   } catch (e) {
-    return [...INITIAL_DEMO_LISTINGS];
+    return [...ALL_DEMO_LISTINGS];
   }
+}
+
+function withDistrictDemos(listings, cityId, { categorySlug = "all", locality = "", query = "" } = {}) {
+  const normalizedCityId = Number(cityId);
+  const term = query.trim().toLowerCase();
+  const localityTerm = locality.trim().toLowerCase();
+  const demos = ALL_DEMO_LISTINGS.filter(item => {
+    if (item.city_id !== normalizedCityId || item.status !== "approved") return false;
+    if (categorySlug && categorySlug !== "all" && item.category_slug !== categorySlug) return false;
+    if (localityTerm && !item.locality.toLowerCase().includes(localityTerm)) return false;
+    if (term && !`${item.name} ${item.description} ${item.locality}`.toLowerCase().includes(term)) return false;
+    return true;
+  });
+  const existingIds = new Set(listings.map(item => item.id));
+  return [...listings, ...demos.filter(item => !existingIds.has(item.id))];
 }
 
 function saveLocalListings(listings) {
@@ -70,7 +88,10 @@ export const listingsRepo = {
 
         const { data, error } = await query;
         if (error) throw error;
-        return { data: (data || []).map(normalizeListing), error: null };
+        return {
+          data: withDistrictDemos((data || []).map(normalizeListing), cityId, { categorySlug, locality }),
+          error: null
+        };
       } catch (err) {
         console.warn("Supabase listings query fallback to local:", err.message);
       }
@@ -111,7 +132,10 @@ export const listingsRepo = {
           .order("created_at", { ascending: false });
 
         if (error) throw error;
-        return { data: (data || []).map(normalizeListing), error: null };
+        return {
+          data: withDistrictDemos((data || []).map(normalizeListing), cityId, { query: cleaned }),
+          error: null
+        };
       } catch (err) {
         console.warn("Supabase search fallback to local:", err.message);
       }

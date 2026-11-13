@@ -1516,7 +1516,10 @@ a {
 }
 
 .brand-title {
-  background: linear-gradient(120deg, #f8faf6 0%, #d6f1df 70%, #f4d58c 100%);
+  background: none;
+  color: #f8faf6;
+  -webkit-background-clip: initial;
+  -webkit-text-fill-color: #f8faf6;
 }
 
 .brand-tagline {
